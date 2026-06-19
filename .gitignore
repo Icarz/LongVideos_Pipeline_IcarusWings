@@ -1,0 +1,50 @@
+# --- Secrets (never commit) ---
+.env
+*.env
+!.env.example
+
+# --- Virtual environment ---
+venv/
+.venv/
+env/
+
+# --- Pipeline artifacts / caches ---
+tmp/
+output/
+logs/
+*.log
+
+# Generated media + cached fetches
+*.mp4
+*.mp3
+*.wav
+*.m4a
+*.png
+*.jpg
+*.jpeg
+footage_history.json
+*.plan.json
+script_*.json
+# keep brand/music assets if you add an assets/ dir tracked deliberately
+!assets/**
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

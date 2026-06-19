@@ -1,0 +1,75 @@
+WORKING TITLE: Why Your Focus Dies at 2PM (It's Not Willpower, and It's Not Your Lunch)
+
+Angle: false cause (laziness / lunch) -> true cause (circadian dip) -> lever (schedule around the clock)
+Target length: ~5 min  |  ~800 words  |  written for voiceover
+Mechanism confidence: SOLID. The post-lunch dip is primarily circadian, not food-driven. It occurs even when subjects eat no lunch and don't know the time of day. A high-carb lunch exacerbates it but does not cause it.
+
+KEEP-NO-MATTER-WHAT LINE: "the crash still happened to people who ate no lunch at all... who didn't even know what time it was." That single fact is the entire proof. Without it, the reframe is an assertion, not a demonstration.
+
+================================================================
+SCRIPT
+================================================================
+
+[COLD OPEN - hook, 0:00-0:20]
+
+Every afternoon, around the same time, it happens. You sit down to do the work that matters. And your brain just... won't. The words blur. You read the same sentence three times. You reach for coffee, or your phone, or a snack - anything. And quietly, you tell yourself the same thing you always do: I have no discipline.
+
+You're wrong about that. Not kindly wrong. Factually wrong. And once you see what's actually happening at 2PM, you'll stop fighting the wrong enemy.
+
+
+[THE FALSE CAUSE - 0:20-1:00]
+
+Here's the story almost everyone tells themselves about the afternoon slump. I'm lazy. I lack willpower. Other people push through and I don't. It feels true, because it arrives right on cue - you're fine in the morning, you collapse after lunch, so you blame the most obvious suspect: yourself, and the sandwich you just ate.
+
+That's the second myth. The "food coma." You ate too much, the blood rushed to your stomach, now you're slow. Everyone believes it. It's on every wellness blog.
+
+It's almost entirely wrong. And we can prove it.
+
+
+[THE TURN - open the loop - 1:00-1:30]
+
+Because here's the strange part. Scientists studied this dip in controlled conditions - and the crash still happened to people who ate no lunch at all. People who didn't even know what time it was. No food. No clock. Same dip. Same hour.
+
+So if it happens when you skip lunch entirely... it was never really about lunch. And if it arrives on a schedule whether you know the time or not... it was never about your willpower either. So what is it?
+
+
+[THE TRUE CAUSE - payoff #1 - 1:30-2:45]
+
+You have an internal clock. Not a metaphor - a physical, biological rhythm running on roughly a 24-hour cycle, set deep in your brain. It governs your body temperature, your hormones, your alertness. And it does not run flat across the day.
+
+It has a peak in the late morning. Then, in the early afternoon, it dips - hard. This is built in. It's a real, measured trough in your alertness that shows up around the same time every day, independent of food, independent of effort. Researchers have a dry name for it: the post-lunch dip. But the lunch is innocent. The clock is doing this.
+
+Think about what that means. At 2PM, you are not failing to concentrate. Your biology is actively lowering your alertness, on schedule, the way it's done every day of your life. Fighting it with willpower is like trying to hold your breath against the urge to breathe. You can do it for a bit. You will always lose. Not because you're weak - because you're human.
+
+
+[RE-HOOK - open the next loop - 2:45-3:10]
+
+Now - if it's biological and built-in, that sounds like bad news. Like you're stuck with it. But it's the opposite. Because the moment you know the cause is a predictable rhythm instead of a character flaw, you get something willpower never gave you: a strategy. You stop trying to be stronger. You start working with the clock instead of against it.
+
+
+[THE LEVER - payoff #2, the actionable part - 3:10-4:30]
+
+Here's how. Three moves, all built on the same idea: stop spending your dip the way you spend your peak.
+
+One. Your late morning is your sharpest window. So protect it. The hardest, most focus-heavy task of your day - the writing, the thinking, the thing you keep avoiding - goes there, not at 2PM. Most people waste their peak on email and save their hardest work for their worst hour. Flip it.
+
+Two. Stop assigning deep work to the dip at all. The early afternoon is for the low-stakes stuff - admin, replies, organizing, routine tasks that don't need a sharp mind. You're not lowering your standards. You're matching the task to the brain you actually have at that hour.
+
+Three. If you want to blunt the dip itself, two things genuinely help, and neither is caffeine. A short walk - even ten minutes - and real light, ideally outdoors. Movement and light are direct signals to that internal clock that it's time to be alert. And one quiet bonus: a lighter, lower-carb lunch won't erase the dip, but it stops you amplifying it. The clock causes the dip. A heavy lunch just makes it worse.
+
+
+[CLOSE - land the thesis - 4:30-5:00]
+
+So here's what actually happened every afternoon you called yourself lazy. Your body ran its clock. Right on time. And you mistook a rhythm for a flaw - and then punished yourself for it.
+
+The people who seem to have endless afternoon discipline mostly don't. They've just stopped scheduling their hardest work inside their body's lowest hour. That's not willpower. That's design.
+
+You were never lazy at 2PM. You were just fighting your own clock - and blaming yourself for losing.
+
+================================================================
+CRAFT NOTES
+================================================================
+
+- Two-myth structure (not willpower / not your lunch) gives two false causes to knock down -> two curiosity gaps -> holds the middle.
+- Every payoff opens the next question instead of closing clean: dip is biological (sounds like a dead end) -> that's exactly why you can beat it -> here's how. No comfortable exit until the last line.
+- Next step: beat-map for footage. Break into ~30-60s narrative beats, each with several visual changes. Tag each beat Tier 1 (literal stock), Tier 2 (concrete query), Tier 3 (abstract - needs metaphor footage).
