@@ -2,6 +2,13 @@
 .env
 *.env
 !.env.example
+# Google / YouTube OAuth credentials
+client_secret*.json
+*.apps.googleusercontent.com.json
+token.json
+*.token.json
+# crash dumps
+*.stackdump
 
 # --- Virtual environment ---
 venv/
