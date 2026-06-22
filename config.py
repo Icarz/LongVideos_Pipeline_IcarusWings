@@ -53,12 +53,21 @@ MECHANISM_CONFIDENCE_VALUES = ["solid", "partial", "check"]
 BEAT_MODEL = "claude-opus-4-8"
 BEAT_MAX_TOKENS = 8000
 BEAT_RETRY_ATTEMPTS = 3
-BEAT_MIN_SECONDS = 3
-BEAT_MAX_SECONDS = 8
-# Cinematic treatment appended to every fetch query to bias the stock search
-# toward the channel's dark/cool/moody look (a hard filter, not a vibe).
+BEAT_MIN_SECONDS = 2
+BEAT_MAX_SECONDS = 4
+BEAT_MAX_TOKENS = 12000
+TARGET_BEATS_MIN = 75
+TARGET_BEATS_MAX = 130
 MOOD_TREATMENT = "low light, moody, cinematic, cool tone, shadows"
-BEAT_TIERS = [1, 2, 3]
+
+VISUAL_WORLDS = {
+    "lone_silhouette": "a single backlit/shadowed figure",
+    "figure_in_landscape": "small human in a large natural scene",
+    "nature_atmosphere": "fog, ocean, rain, light-rays, city-at-dusk, sky",
+    "texture_abstract": "slow abstract motion, light, ink, particles, grain",
+    "intimate_closeup": "hands, eyes, breath, small human detail",
+    "slow_human_moment": "an unhurried, anonymous person doing something cinematic",
+}
 
 # --- TTS + alignment (stage 4) --------------------------------------------
 ELEVENLABS_VOICE_ID = "PLACEHOLDER_PICK_A_DEEP_CALM_MALE_VOICE"  # TODO: user sets real ID
