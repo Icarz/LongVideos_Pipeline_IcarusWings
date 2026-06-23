@@ -1,119 +1,127 @@
 # Long-Form Narrated-Video Pipeline — Technical Specification
 
-**Status:** GREENFIELD / design spec. Stage 1 (`script_gen`) is built and has produced
-one validated artifact (`tmp/script_01.json`). Everything downstream is design.
-Sections tagged `[DESIGN]` are intended behavior to implement; `[REUSE]` marks logic
-that can be lifted from the existing Icarus Wings Shorts pipeline; `[VALIDATE]` marks
-assumptions to confirm against a real run and correct.
+**Status:** GREENFIELD / design spec. Stages 1–3 are built. Everything downstream
+is design. Sections tagged `[DESIGN]` are intended behavior to implement;
+`[REUSE]` marks logic that can be lifted from the existing Icarus Wings Shorts
+pipeline; `[VALIDATE]` marks assumptions to confirm against a real run.
 **Platform:** Windows-first, Python 3.12 (match existing Shorts stack).
 **Brand:** Icarus Wings.
 **Goal:** Turn a chosen *topic/angle* into a finished ~5-minute, 16:9, narrated
-self-improvement video in a **specific editorial style** (see §0) — stock-footage
-visuals carrying bold animated text, over a single AI voiceover and an ambient bed.
+self-improvement video — stock-footage visuals carrying bold animated text, over
+a single AI voiceover and an ambient bed.
 
 > NOTE TO CLAUDE CODE: Do NOT scaffold all modules at once. Build and verify ONE
-> stage at a time in the order in §4. The creative core is now **two coupled things**:
-> the mood-based footage match AND the kinetic-text layer. Get a real artifact from
-> each hard stage before wiring downstream. The schemas in §5 are starting points
-> expected to change after the first real beat-map.
+> stage at a time in the order in §4.
 
 ---
 
-## 0. Editorial style — the thing that defines this channel
+## 0. Editorial style — the semantic framework (standing instruction)
 
-The channel's look is a deliberate **blend of two reference edits** the user supplied
-(a loud "discipline" edit and a calm "cinematic" edit). The synthesis, locked with the
-user:
+The channel's visual language is governed by a **semantic framework** that
+applies to every script, now and in the future. It is not overridden per-video.
 
-**V2's eyes, V1's voice** — cinematic/cool footage, carrying bold kinetic text, cut at
-a medium-fast rhythm.
+### The core rule
 
-| Dimension | Source | Result |
-|---|---|---|
-| Mood / footage world | calm-cinematic ref | dark, cool, low-key, slow, atmospheric |
-| Text / punch | discipline ref | kinetic keyword typography is a **lead layer**, not sparse |
-| Pacing | between both | **~2–4s per visual** (≈ 75–130 beats for 5 min) |
-| Structure | both (identical) | one branded segment-title card per section + full-frame text cards on key lines |
-| Accent | new (cold) | dark/cool base + **one cold icy white-blue accent** (optional single warm-amber pop). NOT the refs' red. |
+Never read a script line literally. Always ask: **what is the human scene
+underneath this sentence?** A person, a place, a physical moment, a feeling
+made visible. That scene is what you fetch. The words are just the path to it.
 
-### The five rules that govern editing (these replace literal-noun matching)
+### Per-beat three-step process (mandatory, in order)
 
-1. **Footage is chosen by MOOD, not by noun.** A beat's job is to set the emotional
-   backdrop for the spoken line and its on-screen text — NOT to literally depict the
-   subject. **Explicitly dropped:** desk / clock / coffee / rubbing-eyes / head-in-hands
-   / ticking-clock / battery-icon literalism. Forbidden.
-2. **Text-as-A-roll.** Each sentence donates 1–3 keywords, animated large (bold-sans +
-   italic-serif mix). The footage is the backdrop behind the moving word.
-3. **Cohesion comes from grade + type, not from the clips.** Disparate CC0 stock is
-   unified into one video by a **dark/cool color-grade (LUT) + grain + one type system +
-   the single accent color**. This is how the references make mismatched footage feel
-   like one piece. This is the core trick — without it the video looks like random stock.
-4. **Branded spine.** One reusable segment-title-card template marks each section;
-   full-frame text cards land the hook / turn / lever / close.
-5. **Aesthetic queries, not documentary.** `beat_plan` emits cinematic-look queries
-   (e.g. "silhouette walking fog backlit", "slow aerial ocean dusk moody"), scored on
-   *look*, not literal accuracy.
+1. **Situation** — translate the line into a physical human moment. Who, where,
+   doing what, feeling what. No abstractions. Write it as if describing a film
+   shot to a cinematographer.
+2. **Mood** — apply the channel's visual identity to every beat without
+   exception: **cool, dark, cinematic, shadow-heavy, low-key lighting.** Add
+   1–2 specific atmosphere words relevant to the beat (tense, still, exhausted,
+   isolated, quietly determined). These travel with every query, always.
+3. **Query** — combine situation + mood into a concrete **4–7 word** fetch
+   string. Must name a literal, photographable object or scene.
 
-### Visual worlds (the controlled vocabulary `beat_plan` picks from)
+### Hard-banned query words
 
-Every beat maps to ONE visual world. The fetch query must return cinematic stock in it:
-- `lone_silhouette` — a single backlit/shadowed figure.
-- `figure_in_landscape` — small human in a large natural scene.
-- `nature_atmosphere` — fog, ocean, rain, light-rays, city-at-dusk, sky.
-- `texture_abstract` — slow abstract motion, light, ink, particles, grain.
-- `intimate_closeup` — hands, eyes, breath, small human detail.
-- `slow_human_moment` — an unhurried, anonymous person-doing-something cinematic shot.
+> focus, willpower, discipline, motivation, biology, rhythm, alertness, energy,
+> productivity, mindset, habit, growth, success, failure, struggle
 
-(If a beat genuinely needs a concrete object, it still goes through a visual world and
-is shot cinematically, low-key — never bright catalogue stock.)
+If you write one, go one layer deeper into the physical scene.
+
+### Tiers
+
+| Tier | Description |
+|------|-------------|
+| 1 | Literal photographable scene |
+| 2 | Concrete but needs specific framing |
+| 3 | Abstract — must resolve to cinematic metaphor in the situation layer |
+
+### Tier 3 metaphor targets
+
+| Concept | Metaphor |
+|---|---|
+| Energy draining | candle burning low in dark room |
+| Mental fog | dim window, rain-blurred glass |
+| Clock / time | analogue clock face, long shadows on floor |
+| Internal conflict | two hands gripping a desk edge |
+| Biological force | tide moving in dark water, slow exhale of breath |
+
+### Calibration gate (mandatory)
+
+Before processing any new script: produce beats for the first 3 hook sentences.
+Output them and stop. Wait for human approval before continuing. This catches a
+misread interpretation on 3 beats instead of 60.
+
+### Look
+
+Dark, low-key, cool/desaturated, slow, calm-but-tense. Shadow-heavy. When two
+clips match, pick the darker/cooler/slower.
+
+### Legal
+
+CC0 only (Pexels/Pixabay/Coverr). No anime/movie/meme assets.
 
 ---
 
 ## 1. Purpose & the one thing that's different from Shorts
 
-The existing Shorts pipeline is **transcript → extract → decorate**: it pulls a 25–58s
-window out of someone else's podcast. The source of truth is audio that already exists.
+The existing Shorts pipeline is **transcript → extract → decorate**: it pulls a
+25–58s window out of someone else's podcast. The source of truth is audio that
+already exists.
 
-This pipeline is **topic → script → voice → style-edit**: there is no source audio. The
-script is *authored*, voiced with TTS, then **edited in the §0 style** — mood footage +
-kinetic text + grade. The creative core (script, mood-matching, and the text layer)
-does not exist in Shorts and cannot be borrowed.
+This pipeline is **topic → script → voice → style-edit**: there is no source
+audio. The script is *authored*, voiced with TTS, then **edited in the §0
+style** — mood footage + kinetic text + grade.
 
-What CAN be borrowed is back-half plumbing: stock fetching, footage dedup, the MoviePy
-render core, music bed, watermark, caching, publish.
+What CAN be borrowed is back-half plumbing: stock fetching, footage dedup, the
+MoviePy render core, music bed, watermark, caching, publish.
 
 ## 2. Output contract
 
 A single run produces:
 - One **16:9 1920×1080 MP4**, ~4–6 min, single narrated voiceover over a mood
-  stock-footage montage, **a kinetic-text layer**, a unifying dark/cool grade, a music
-  bed, and a brand watermark.
-- On-screen text is a **core, frequent layer** (kinetic keyword animation + branded
-  segment cards + full-frame text cards) — NOT word-level karaoke captions, and NOT the
-  old "sparse, three-cases-only" rule. Text is stylized and rhythm-driven, landing on a
-  large share of beats, never word-by-word.
+  stock-footage montage, **a kinetic-text layer**, a unifying dark/cool grade, a
+  music bed, and a brand watermark.
 
 ## 3. Pipeline stages (high level)
 
 ```
 topic/angle
-  → [1] script_gen      authored ~800-word script, structured beats        [BUILT]
-  → [2] beat_plan       split into mood beats; visual-world + query + TEXT per beat
-  → [3] background      fetch cinematic footage per beat (Pexels→Pixabay→Coverr)
-  → [4] tts             ElevenLabs voiceover + word/segment timings
-  → [5] video_gen       footage + GRADE + kinetic-text engine + music + watermark
-  → [6] publish         R2 upload + YouTube (reuse Shorts logic)
+  → [1] script_gen         authored ~800-word script, structured beats     [BUILT]
+  → [2] beat_plan          situation/mood/query per beat (semantic framework) [BUILT]
+  → [3] tts                edge-tts voiceover + word/segment timings       [BUILT]
+  → [4] background         fetch cinematic footage per beat                [BUILT]
+  → [5] video_gen          footage + GRADE + kinetic-text + music + wm
+  → [6] publish            R2 upload + YouTube (reuse Shorts logic)
 ```
 
 ## 4. Build order (do these one at a time)
 
 1. `script_gen` — **DONE**; `tmp/script_01.json` validated.
-2. `beat_plan` — beat-map that real script by hand-in-code; let it define the real
-   schema (mood beats + per-beat text). Measure real beat count and visual-world mix.
-3. `background` — fetch cinematic footage for those real beats; measure the true
-   look-match rate under the §0 mood filter.
-4. `tts` — voice the real script; capture timings (these backfill beat start/end).
-5. `video_gen` — assemble the first end-to-end video **with the grade + text engine**.
+2. `beat_plan` — **DONE**; semantic framework (situation/mood/query/tier).
+   Calibration gate built in. Target 40–65 beats per script.
+3. `tts` — **DONE**; `tmp/voiceover_01.mp3` + timings (edge-tts).
+4. `background` — **DONE** (code); fetches per beat using query field.
+   Query-level cache reuses clips when adjacent beats share a query.
+5. `video_gen` — assemble the first end-to-end video **with the grade + text
+   engine**.
 6. `publish` — last; reuse Shorts modules nearly as-is.
 
 Do not proceed until the current stage produces a real artifact you've inspected.
@@ -121,142 +129,118 @@ Do not proceed until the current stage produces a real artifact you've inspected
 ## 5. Module data contracts
 
 ### 5.1 `script_gen` [BUILT — keep]
-- **Input:** `{title, false_cause, true_cause, lever}` (angle skeleton) + optional
-  research notes.
-- **Output:** structured script object (unchanged shape):
+- **Input:** `{title, false_cause, true_cause, lever}` (angle skeleton) +
+  optional research notes.
+- **Output:** structured script object:
 ```
 { title, hook, sections:[{role, text}], keep_line, mechanism_confidence, est_words }
 ```
-- **Hard rules (unchanged):** structure false_cause → turn → true_cause → re_hook →
-  lever → close; each payoff opens the next loop. **Mechanism integrity is
-  non-negotiable** — `check` confidence must present uncertainty honestly. Does NOT
-  invent statistics; factual claims come from supplied research notes only.
-- Topics/angles are **unchanged** by the style pivot. Only editing changes downstream.
+- **Hard rules:** structure false_cause → turn → true_cause → re_hook → lever →
+  close; each payoff opens the next loop. **Mechanism integrity is
+  non-negotiable.**
 
-### 5.2 `beat_plan` [DESIGN — hardest stage; defines the style in data]
-- **Input:** the structured script (+ later, tts word timings for exact start/end).
-- **Output:** an ordered list of mood beats:
+### 5.2 `beat_plan` [BUILT — semantic framework]
+- **Input:** the structured script.
+- **Output:** an ordered list of beats:
 ```
 beats: [
-  { start, end,            # timestamps (backfilled from tts)
-    line,                  # the sentence(s) this beat covers
-    tone,                  # emotional read of the line (e.g. tense, calm, resolve)
-    visual_world,          # one of §0's six worlds
-    query,                 # cinematic aesthetic fetch query (look, not literal)
-    text:                  # the kinetic-text plan for this beat, or null
-      { keywords,          #   1–3 words pulled from the line
-        style },           #   card | keyword-overlay | segment-title
-    section_role }         # carries the script section role for spine logic
+  { line,                  # exact sentence(s) from the script
+    situation,             # plain-language film shot description
+    mood,                  # "cool, dark, cinematic — [atmosphere words]"
+    query,                 # concrete 4–7 word photographable fetch string
+    tier,                  # 1 (literal) | 2 (needs framing) | 3 (metaphor)
+    section_role }         # hook|false_cause|turn|true_cause|re_hook|lever|close
 ]
 ```
-- **Cadence:** target a visual change every **~2–4s** (NOT 3–8s). A 5-min video ≈
-  **75–130 beats**.
-- **Text density:** a large share of beats carry text (keywords or a card); hooks,
-  turns, levers, and the close get the strongest treatment. Not every beat — footage-only
-  breathing beats are allowed and desirable.
-- **Segment spine:** the first beat of each script section emits a `segment-title` card
-  (one reusable template).
-- **Hard rule:** every beat emits a **cinematic-mood query** within its `visual_world`.
-  "focus" is not a query; "lone silhouette at a window, cold light, shallow depth" is.
-- **[VALIDATE]** real beat count, visual-world distribution, and text-density ratio on
-  the first real script — fold the numbers back here.
+- **Beat count:** target **40–65** for a ~800-word script. Warning logged below
+  45; hard error below 28 or above 85.
+- **Banned words in queries:** focus, willpower, discipline, motivation,
+  biology, rhythm, alertness, energy, productivity, mindset, habit, growth,
+  success, failure, struggle. Validated.
+- **Mood prefix:** every beat's mood field must start with "cool, dark,
+  cinematic". Validated.
+- **Calibration gate:** `generate_calibration_beats(script)` produces first 3
+  hook beats for human approval before the full run.
 
-### 5.3 `background` [REUSE plumbing — new selection criteria]
-- **Input:** the beat list.
-- **Behavior:** per beat, fetch a clip for `query` via the degrade-never chain:
-  **Pexels video → Pixabay video (incl. AI category for `texture_abstract`) → Coverr →
-  gradient/solid fallback.** All CC0-style / no-attribution / API. Do NOT add
-  attribution-required sources (Videezy, Vidsplay, Dareful, Freepik). Anime/movie/meme
-  assets seen in the references are **off-limits (copyright)** — we reproduce the
-  *rhythm*, not those assets.
-- **Selection filter [§0]:** when multiple clips match, pick the **darker / cooler /
-  slower** one. Reject bright, busy, corporate-catalogue stock. The grade in §5.5 then
-  unifies what's kept.
+### 5.3 `background` [BUILT — beat-level fetch]
+- **Input:** the beat list (each beat has a `query` field).
+- **Behavior:** per beat, search for `query` via the degrade-never chain:
+  **Pexels video → Pixabay video → simplified query fallback → gradient
+  fallback.** All CC0-style / no-attribution / API.
+- **Query cache:** beats with identical queries (normalized) reuse the same clip
+  without a second API call.
+- **Selection filter:** when multiple clips match, pick the longest-duration
+  fresh clip (not previously used in this run or history).
 - **Orientation:** landscape / 16:9.
-- **Dedup [REUSE]:** two-tier id ledger (`used_ids` within-run, `history_ids`
-  cross-video via `footage_history.json`). At 75–130 beats/video this matters a lot.
-- **Output:** ordered list of clip paths aligned 1:1 to beats.
-- **[VALIDATE]** Pexels free-tier rate limit (200 req/hr) vs. 75–130 fetches + retries.
-  Reuse `PEXELS_BACKOFFS`; expect throttling.
+- **Dedup:** two-tier id ledger (`run_ids` within-run, `history_ids` cross-video
+  via `footage_history.json`).
+- **Output:** `{ "beat_clips": [path_per_beat], "stats": {...} }`
+- **[VALIDATE]** Pexels free-tier rate limit (200 req/hr) vs. 40–65 fetches +
+  retries. Reuse `PEXELS_BACKOFFS`; expect throttling.
 
-### 5.4 `tts` [DESIGN — REUSE pattern from Shorts transcribe contract]
+### 5.4 `tts` [BUILT]
 - **Input:** full spoken text (concatenated sections).
-- **Output:** `{audio_path, words:[{word,start,end}], segments:[{start,end,text}]}` —
-  same shape as Shorts `transcribe`, so beat timings backfill cleanly.
-- **Engine:** ElevenLabs, one fixed voice ID (consistency). Calm, low, measured
-  narrator (~140–150 wpm). Store voice ID in `config`.
-- **[VALIDATE]** whether ElevenLabs word timings are usable, else forced-alignment pass
-  (Groq Whisper on the generated audio — `align.py`). Assume the latter until proven.
+- **Output:** `{audio_path, segments:[{start,end,text}]}` — edge-tts with
+  sentence-boundary timings.
+- **Engine:** edge-tts, `en-US-AndrewMultilingualNeural` voice.
+- **[VALIDATE]** whether sentence timings are precise enough for per-beat sync,
+  else forced-alignment pass (Groq Whisper on the generated audio).
 
-### 5.5 `video_gen` [REUSE MoviePy core — major additions: grade + text engine]
-- **Reuse directly:** MoviePy v2 API only; bar-proof Ken Burns (`_ken_burns_motion`,
-  single resize + clamped pan); crossfades; cover-crop to exact frame; per-clip duration
-  cap; music bed (`_music_track`, −18 dB under VO, fade in/out); brand watermark;
-  edge-brightness verification scan.
+### 5.5 `video_gen` [DESIGN — major additions: grade + text engine]
+- **Reuse directly:** MoviePy v2 API only; bar-proof Ken Burns; crossfades;
+  cover-crop; per-clip duration cap; music bed (−18 dB under VO, fade in/out);
+  brand watermark; edge-brightness verification scan.
 - **Add for this style:**
   - Frame = **1920×1080** (16:9), 30 fps.
-  - Clip timing driven by **beat start/end**.
-  - **Unifying color-grade pass** — a dark/cool LUT + grain applied to all footage so
-    disparate stock reads as one video (§0 rule 3). This is mandatory, not optional.
-  - **Kinetic-text engine** — renders the `text` plan per beat: (a) `keyword-overlay`
-    (1–3 words animated large over footage, bold-sans + italic-serif mix, cold accent);
-    (b) `card` (full-frame text on graded/solid bg for hook/turn/lever/close); (c)
-    `segment-title` (one reusable branded template per section). Near-white + the single
-    cold accent; tasteful motion-in/out. **No word-by-word karaoke.**
-  - Background darkening kept under text for legibility.
-- **Motion/music feel [§0]:** slow Ken Burns drift + gentle crossfades by default; hard
-  cuts reserved for the "turn" reveal; ambient bed swells slightly at the turn and the
-  close.
+  - Clip timing driven by **beat start/end** (from TTS timings).
+  - **Unifying color-grade pass** — dark/cool LUT + grain on all footage.
+  - **Kinetic-text engine** — renders keyword overlays and text cards.
+  - Background darkening for text legibility.
+- **Motion/music feel:** slow Ken Burns drift + gentle crossfades; hard cuts
+  reserved for the "turn" reveal; ambient bed swells at turn and close.
 - **Output:** final MP4 path.
 
 ### 5.6 `publish` [REUSE — Shorts `storage` + `youtube_publish`]
 - R2 upload + YouTube upload, best-effort, never fatal to a completed render.
 - Default privacy `private`; flag to override.
-- Long-form is NOT a Short — set category/metadata accordingly; do not tag `#Shorts`,
-  do not constrain to <60s.
 
 ## 6. Architecture principles (carry over from Shorts)
 - Linear, config-driven pipeline; `config.py` is the single source of truth.
 - Publish is best-effort, never fatal once a render exists.
 - Cache to protect API credit: cache script, TTS audio, and footage per video.
-- Non-determinism (script + beat extraction) handled in-code: validate, retry, recover
-  — never silently ship a malformed plan.
+- Non-determinism (script + beat extraction) handled in-code: validate, retry,
+  recover — never silently ship a malformed plan.
 
 ## 7. Config constants to define (`config.py`)
 - `VIDEO_WIDTH=1920`, `VIDEO_HEIGHT=1080`, `VIDEO_FPS=30`.
 - `TARGET_WORDS_MIN=700`, `TARGET_WORDS_MAX=900`, `NARRATION_WPM≈150`.
-- `BEAT_MIN_SECONDS≈2`, `BEAT_MAX_SECONDS≈4`, `TARGET_BEATS≈75..130`.
-- `VISUAL_WORLDS` (the §0 list) + per-world query hints.
-- `MOOD_*` selection filter (prefer dark/cool/slow); `GRADE_LUT`, `GRADE_GRAIN`.
-- `TEXT_*` — fonts (bold-sans + italic-serif), `ACCENT_COLOR` (cold icy white-blue),
-  card/overlay/segment-title styles, text-density target.
-- `ELEVENLABS_VOICE_ID` (fixed, placeholder until user picks), `TTS_MODEL`.
+- `BEAT_MIN_SECONDS≈2`, `BEAT_MAX_SECONDS≈4`, `TARGET_BEATS≈40..65`.
+- `MOOD_LUMA_*` selection filter (prefer dark/cool/slow); `GRADE_LUT`,
+  `GRADE_GRAIN`.
+- `TEXT_*` — fonts (bold-sans + italic-serif), `ACCENT_COLOR` (cold icy
+  white-blue), card/overlay styles.
 - Background chain order + per-source enable flags; reuse `PEXELS_*`,
   `FOOTAGE_HISTORY_MAX`.
 - Music/watermark constants reused from Shorts.
 
 ## 8. External services & secrets (`.env`)
 - **Script:** `ANTHROPIC_API_KEY`.
-- **Voice:** `ELEVENLABS_API_KEY`.
-- **Footage:** `PEXELS_API_KEY`, `PIXABAY_API_KEY`, Coverr access.
+- **Voice:** edge-tts (no key required).
+- **Footage:** `PEXELS_API_KEY`, `PIXABAY_API_KEY`.
 - **(Optional) forced alignment:** `GROQ_API_KEY`.
-- **Storage/publish [REUSE]:** Cloudflare R2 keys, YouTube OAuth
-  (`YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN`).
+- **Storage/publish [REUSE]:** Cloudflare R2 keys, YouTube OAuth.
 
 ## 9. Out of scope (v1)
-- Sourcing copyrighted anime / movie / meme assets (the references use them; we do not).
+- Sourcing copyrighted anime / movie / meme assets.
 - Word-level karaoke captions.
 - Instagram/TikTok publishing.
 - Thumbnail generation (handle manually for now).
 - Automated test suite beyond per-module smoke harnesses.
-- AI-generated footage — flagged open; revisit at the `background` stage if the CC0 chain
-  can't fill `texture_abstract` / metaphor beats.
+- AI-generated footage.
 
 ## 10. Definition of done (v1)
-One command takes an angle skeleton and produces one watchable ~5-min 16:9 MP4, end to
-end, in the §0 style: structurally-correct script, honest mechanism, single consistent
-calm voiceover, **mood footage unified by a dark/cool grade**, a **kinetic-text layer**
-at ~2–4s cadence with branded segment cards, a music bed, and a watermark — uploaded
-private to YouTube. Ugly-but-complete beats polished-but-partial. Measure real numbers
-(beat count, visual-world mix, text density, look-match rate, runtime) on the first run
-and fold them back into this spec.
+One command takes an angle skeleton and produces one watchable ~5-min 16:9 MP4,
+end to end, in the §0 style: structurally-correct script, honest mechanism,
+single consistent calm voiceover, **mood footage unified by a dark/cool grade**,
+a **kinetic-text layer**, a music bed, and a watermark — uploaded private to
+YouTube.

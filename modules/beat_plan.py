@@ -1,12 +1,10 @@
 """Stage 2 — beat_plan: split a structured script into cinematic mood beats.
 
-Input  : a structured script dict from script_gen (SPEC §5.1).
-Output : ordered beat list (SPEC §5.2):
-         { beats: [{ line, tone, visual_world, query, text, section_role }] }
+Uses the standing instruction (semantic framework): every beat goes through
+situation → mood → query. Never literal, always cinematic.
 
-Each beat covers ~2–4s of narration and defines the visual + text treatment for
-that slice. Timestamps are backfilled from TTS in stage 4. The editorial rules
-(SPEC §0) are encoded in the system prompt as hard constraints.
+Input  : structured script dict from script_gen.
+Output : { beats: [{ line, situation, mood, query, tier, section_role }] }
 """
 
 import json
@@ -24,73 +22,90 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+BANNED_QUERY_WORDS = {
+    "focus", "willpower", "discipline", "motivation", "biology",
+    "rhythm", "alertness", "energy", "productivity", "mindset",
+    "habit", "growth", "success", "failure", "struggle",
+}
+
+METAPHOR_TABLE = (
+    "- Energy draining → candle burning low in dark room\n"
+    "- Mental fog → dim window, rain-blurred glass\n"
+    "- Clock / time → analogue clock face, long shadows on floor\n"
+    "- Internal conflict → two hands gripping a desk edge\n"
+    "- Biological force → tide moving in dark water, slow exhale of breath"
+)
+
+TARGET_BEATS_MIN = 40
+TARGET_BEATS_MAX = 65
+
 SYSTEM_PROMPT = (
     "You are the visual editor for Icarus Wings, a self-improvement channel. You take "
     "a written script and break it into a BEAT MAP — an ordered list of mood beats that "
-    "define how the video will look and feel.\n\n"
+    "define what footage to fetch for each line.\n\n"
     "You MUST respond with ONLY a single valid JSON object — no markdown, no code "
     "fences, no commentary before or after.\n\n"
 
-    "## THE FIVE EDITING RULES (non-negotiable)\n\n"
-    "1. FOOTAGE BY MOOD, NOT NOUN. A beat sets the emotional backdrop for the spoken "
-    "line — NOT a literal depiction. FORBIDDEN queries: desk, clock, coffee, rubbing-eyes, "
-    "head-in-hands, ticking-clock, battery-icon, brain illustration, person working, or "
-    "any other literal-noun match.\n"
-    "2. TEXT-AS-A-ROLL. Each beat donates 1–3 keywords animated large over footage. The "
-    "footage is the backdrop behind the moving word. Text is a lead layer.\n"
-    "3. COHESION FROM GRADE + TYPE. Disparate stock is unified by a dark/cool grade + "
-    "grain + one type system. Favor footage that works under this treatment.\n"
-    "4. BRANDED SPINE. The first beat of each script section gets a segment-title card. "
-    "Full-frame text cards (style='card') land the hook punchline, the turn reveal, "
-    "the lever's key move, and the close thesis.\n"
-    "5. AESTHETIC QUERIES ONLY. Cinematic-look queries scored on visual mood. "
-    "'silhouette walking fog backlit' — YES. 'person at desk focusing' — NO.\n\n"
+    "## THE CORE RULE\n\n"
+    "Never read a script line literally. Always ask: what is the HUMAN SCENE underneath "
+    "this sentence? A person, a place, a physical moment, a feeling made visible. That "
+    "scene is what you fetch. The words are just the path to it.\n\n"
 
-    "## VISUAL WORLDS (every beat uses exactly one)\n\n"
-    + "\n".join(f"- {k} — {v}" for k, v in config.VISUAL_WORLDS.items())
-    + "\n\n"
+    "## PER-BEAT THREE-STEP PROCESS (mandatory, in order)\n\n"
+    "For every beat, run these three steps before writing the query:\n\n"
+    "1. SITUATION — translate the line into a physical human moment. Who, where, doing "
+    "what, feeling what. No abstractions allowed. Write it in plain language as if "
+    "describing a film shot to a cinematographer.\n"
+    "2. MOOD — apply the channel's visual identity to EVERY beat without exception: "
+    "cool, dark, cinematic, shadow-heavy, low-key lighting. Then add 1–2 specific "
+    "atmosphere words relevant to the beat (tense, still, exhausted, isolated, quietly "
+    "determined, etc). These travel with every query, always.\n"
+    "3. QUERY — combine situation + mood into a concrete 4–7 word fetch string. Must "
+    "name a literal, photographable object or scene. If you can't point a camera at it, "
+    "rewrite it.\n\n"
+
+    "## HARD-BANNED QUERY WORDS\n\n"
+    "These return useless generic stock — if you write one, go one layer deeper into "
+    "the physical scene:\n\n"
+    "focus, willpower, discipline, motivation, biology, rhythm, alertness, energy, "
+    "productivity, mindset, habit, growth, success, failure, struggle\n\n"
+
+    "## TIERS\n\n"
+    "Classify every beat:\n"
+    "- Tier 1: the line describes a literal, photographable scene.\n"
+    "- Tier 2: concrete but needs specific framing or staging.\n"
+    "- Tier 3: abstract concept — you MUST resolve it into a cinematic METAPHOR in the "
+    "situation layer. Choose a physical object that carries the feeling. Never pass an "
+    "abstraction to the query.\n\n"
+
+    "## TIER 3 METAPHOR TARGETS (use these or invent similar)\n\n"
+    + METAPHOR_TABLE + "\n\n"
 
     "## BEAT RULES\n\n"
     "- Break the ENTIRE script (hook + all sections) into ordered beats.\n"
-    "- Each beat covers a small chunk of narration: ~5–10 words (~2–4 seconds at "
-    f"~{config.NARRATION_WPM} wpm).\n"
+    "- Each beat covers one or a few sentences — a natural visual unit.\n"
     "- Beats must cover ALL narration in order — no words skipped or repeated.\n"
-    f"- Target: {config.TARGET_BEATS_MIN}–{config.TARGET_BEATS_MAX} beats total.\n"
-    "- Vary visual_world across beats — avoid long runs of the same world.\n\n"
+    f"- Target: {TARGET_BEATS_MIN}–{TARGET_BEATS_MAX} beats for a ~800-word script.\n"
+    "- Every beat carries a section_role.\n\n"
 
-    "## TEXT PLAN\n\n"
-    "Three styles:\n"
-    "- 'keyword-overlay': 1–3 punchy keywords from the line, animated over footage. "
-    "The default text treatment for most beats.\n"
-    "- 'card': full-frame text on dark background. Reserved for the strongest lines "
-    "(hook punchline, turn reveal, lever payoff, close thesis). ~4–8 cards total.\n"
-    "- 'segment-title': branded section title. Exactly ONE per script section, always "
-    "on the FIRST beat of that section. Keywords = a short label for the section.\n\n"
-    "Set text to null for breathing beats (footage only). "
-    "Aim for ~60–80% of beats with text; the rest are breathing beats.\n\n"
-
-    "## TONE\n\n"
-    "One emotional label per beat. Prefer: introspective, tense, anxious, resigned, "
-    "curious, revelatory, calm, determined, hopeful, resolute, urgent, reflective, "
-    "warm, sharp, quiet, triumphant.\n\n"
-
-    "## QUERY GUIDELINES\n\n"
-    "- 5–12 word cinematic search phrase for stock footage.\n"
-    "- Favor: dark, cool, moody, atmospheric, low-light, shadows, silhouettes, fog.\n"
-    "- Avoid: bright, corporate, generic, busy, colorful, cheerful.\n"
-    "- Good: 'rain on glass bokeh night moody', 'aerial ocean waves dusk slow cinematic'.\n"
-    "- Bad: 'person working at desk', 'clock showing 2pm', 'brain neurons firing'.\n\n"
+    "## SECTION ROLES\n\n"
+    "Use exactly: hook, false_cause, turn, true_cause, re_hook, lever, close\n\n"
 
     "## OUTPUT JSON\n\n"
     "Return exactly:\n"
     '{"beats": [\n'
     '  {"line": "exact words from script",\n'
-    '   "tone": "emotional label",\n'
-    '   "visual_world": "one of the six worlds",\n'
-    '   "query": "cinematic fetch query",\n'
-    '   "text": {"keywords": ["word1", "word2"], "style": "keyword-overlay|card|segment-title"} OR null,\n'
-    '   "section_role": "hook|false_cause|turn|true_cause|re_hook|lever|close"}\n'
+    '   "situation": "plain-language film shot description (2-3 sentences)",\n'
+    '   "mood": "cool, dark, cinematic — [specific atmosphere words]",\n'
+    '   "query": "concrete 4-7 word fetch query",\n'
+    '   "tier": 1,\n'
+    '   "section_role": "hook"}\n'
     "]}\n"
+)
+
+CALIBRATION_INSTRUCTION = (
+    "\n\nCALIBRATION MODE: Generate beats for ONLY the first 3 sentences of the "
+    "hook. Stop after 3 beats. This is a calibration check."
 )
 
 
@@ -127,106 +142,118 @@ def _format_script(script: dict) -> str:
     parts.append(f"[HOOK]\n{script['hook']}\n")
     for section in script["sections"]:
         parts.append(f"[{section['role'].upper()}]\n{section['text']}\n")
-    word_count = len(re.findall(r"\\b[\\w'-]+\\b", _script_full_text(script)))
+    word_count = len(_script_full_text(script).split())
     parts.append(f"\nTotal words: ~{word_count}")
-    parts.append(f"Target beats: {config.TARGET_BEATS_MIN}–{config.TARGET_BEATS_MAX}")
+    parts.append(f"Target beats: {TARGET_BEATS_MIN}–{TARGET_BEATS_MAX}")
     return "\n".join(parts)
 
 
-def _validate(data: dict, script: dict) -> None:
+def _validate(data: dict, calibration: bool = False) -> None:
     if "beats" not in data or not isinstance(data["beats"], list):
         raise ValueError("Missing 'beats' array")
 
     beats = data["beats"]
 
-    if len(beats) < config.TARGET_BEATS_MIN * 0.7:
-        raise ValueError(
-            f"Too few beats: {len(beats)} (need ~{config.TARGET_BEATS_MIN}+). "
-            "Split narration into smaller ~5-10 word chunks.")
-    if len(beats) > config.TARGET_BEATS_MAX * 1.3:
-        raise ValueError(f"Too many beats: {len(beats)} (max ~{config.TARGET_BEATS_MAX})")
+    if calibration:
+        if len(beats) < 1 or len(beats) > 5:
+            raise ValueError(f"Calibration: expected 1-5 beats, got {len(beats)}")
+    else:
+        if len(beats) < TARGET_BEATS_MIN * 0.7:
+            raise ValueError(
+                f"Too few beats: {len(beats)} (need ~{TARGET_BEATS_MIN}+)")
+        if len(beats) > TARGET_BEATS_MAX * 1.3:
+            raise ValueError(
+                f"Too many beats: {len(beats)} (max ~{TARGET_BEATS_MAX})")
 
-    valid_worlds = set(config.VISUAL_WORLDS.keys())
-    valid_styles = {"keyword-overlay", "card", "segment-title"}
     valid_roles = {"hook"} | set(config.SCRIPT_SECTION_ROLES)
 
-    text_count = 0
-    card_count = 0
-    segment_title_roles = set()
-
     for i, beat in enumerate(beats):
-        for field in ("line", "tone", "visual_world", "query", "section_role"):
+        for field in ("line", "situation", "mood", "query", "tier", "section_role"):
             if field not in beat:
                 raise ValueError(f"Beat {i}: missing '{field}'")
 
         if not isinstance(beat["line"], str) or not beat["line"].strip():
             raise ValueError(f"Beat {i}: 'line' must be non-empty")
 
-        if beat["visual_world"] not in valid_worlds:
-            raise ValueError(
-                f"Beat {i}: visual_world '{beat['visual_world']}' invalid. "
-                f"Use: {sorted(valid_worlds)}")
+        if not isinstance(beat["situation"], str) or len(beat["situation"]) < 20:
+            raise ValueError(f"Beat {i}: 'situation' too short — describe the shot")
 
-        if not isinstance(beat["query"], str) or len(beat["query"].split()) < 3:
-            raise ValueError(f"Beat {i}: query too short: '{beat.get('query')}'")
+        mood = beat.get("mood", "")
+        if not mood.lower().startswith("cool, dark, cinematic"):
+            raise ValueError(
+                f"Beat {i}: mood must start with 'cool, dark, cinematic'. "
+                f"Got: '{mood[:40]}'")
+
+        query = beat.get("query", "")
+        words = query.split()
+        if len(words) < 4:
+            raise ValueError(
+                f"Beat {i}: query too short ({len(words)} words): '{query}'")
+        if len(words) > 7:
+            raise ValueError(
+                f"Beat {i}: query too long ({len(words)} words): '{query}'")
+
+        query_lower = query.lower()
+        for banned in BANNED_QUERY_WORDS:
+            if banned in query_lower.split():
+                raise ValueError(
+                    f"Beat {i}: query contains banned word '{banned}': '{query}'")
+
+        if beat["tier"] not in (1, 2, 3):
+            raise ValueError(f"Beat {i}: tier must be 1, 2, or 3, got {beat['tier']}")
 
         if beat["section_role"] not in valid_roles:
-            raise ValueError(f"Beat {i}: section_role '{beat['section_role']}' invalid")
+            raise ValueError(
+                f"Beat {i}: section_role '{beat['section_role']}' invalid")
 
-        text = beat.get("text")
-        if text is not None:
-            if not isinstance(text, dict):
-                raise ValueError(f"Beat {i}: 'text' must be object or null")
-            if "keywords" not in text or "style" not in text:
-                raise ValueError(f"Beat {i}: text needs 'keywords' and 'style'")
-            kw = text["keywords"]
-            if not isinstance(kw, list) or not (1 <= len(kw) <= 3):
-                raise ValueError(f"Beat {i}: keywords must be 1-3 items, got {len(kw) if isinstance(kw, list) else type(kw)}")
-            if text["style"] not in valid_styles:
-                raise ValueError(f"Beat {i}: text style '{text['style']}' invalid")
-            text_count += 1
-            if text["style"] == "card":
-                card_count += 1
-            if text["style"] == "segment-title":
-                segment_title_roles.add(beat["section_role"])
+    if not calibration:
+        if len(beats) < 45:
+            logger.warning(
+                "Beat count %d is below 45 — review pacing on render", len(beats))
 
-    # Text density
-    density = text_count / len(beats) if beats else 0
-    if density < 0.4:
-        raise ValueError(
-            f"Text density {density:.0%} too low (need ~60-80%). "
-            "Most beats should have keyword-overlay text.")
+        role_order = ["hook"] + config.SCRIPT_SECTION_ROLES
+        seen = []
+        for beat in beats:
+            r = beat["section_role"]
+            if not seen or seen[-1] != r:
+                seen.append(r)
+        expected = [r for r in role_order if r in seen]
+        if seen != expected:
+            raise ValueError(f"Section roles out of order: {seen}")
 
-    # Section role ordering
-    role_order = ["hook"] + config.SCRIPT_SECTION_ROLES
-    seen = []
-    for beat in beats:
-        r = beat["section_role"]
-        if not seen or seen[-1] != r:
-            seen.append(r)
-    expected = [r for r in role_order if r in seen]
-    if seen != expected:
-        raise ValueError(f"Section roles out of order: {seen}")
-
-    # Segment title coverage (warn, don't fail)
-    expected_sections = set(config.SCRIPT_SECTION_ROLES)
-    missing = expected_sections - segment_title_roles
-    if missing:
-        logger.warning("Missing segment-title for: %s", sorted(missing))
-
-    # Stats
-    world_dist = {}
+    tier_dist = {1: 0, 2: 0, 3: 0}
     for b in beats:
-        w = b["visual_world"]
-        world_dist[w] = world_dist.get(w, 0) + 1
+        tier_dist[b["tier"]] = tier_dist.get(b["tier"], 0) + 1
     logger.info(
-        "Validation passed | beats=%d | text=%.0f%% | cards=%d | worlds=%s",
-        len(beats), density * 100, card_count,
-        " ".join(f"{k}:{v}" for k, v in sorted(world_dist.items())))
+        "Validation passed | beats=%d | tiers=%s",
+        len(beats),
+        " ".join(f"t{k}:{v}" for k, v in sorted(tier_dist.items())))
+
+
+def generate_calibration_beats(script: dict) -> dict:
+    """Generate only the first 3 hook beats for human review (calibration gate)."""
+    user_body = _format_script(script) + CALIBRATION_INSTRUCTION
+
+    logger.info("Generating calibration beats via %s", config.BEAT_MODEL)
+    client = _client()
+    response = client.messages.create(
+        model=config.BEAT_MODEL,
+        max_tokens=2000,
+        system=[{"type": "text", "text": SYSTEM_PROMPT,
+                 "cache_control": {"type": "ephemeral"}}],
+        messages=[{"role": "user", "content": user_body}],
+    )
+    raw = next((b.text for b in response.content if b.type == "text"), "")
+    parsed = json.loads(_strip_to_json(raw))
+    _validate(parsed, calibration=True)
+    logger.info("Calibration OK | beats=%d", len(parsed["beats"]))
+    return parsed
 
 
 def generate_beat_plan(script: dict) -> dict:
+    """Generate the full beat plan for a script."""
     user_body = _format_script(script)
+
     logger.info("Generating beat plan via %s | title=%r",
                 config.BEAT_MODEL, script.get("title"))
     client = _client()
@@ -239,7 +266,7 @@ def generate_beat_plan(script: dict) -> dict:
     )
     raw = next((b.text for b in response.content if b.type == "text"), "")
     parsed = json.loads(_strip_to_json(raw))
-    _validate(parsed, script)
+    _validate(parsed)
     logger.info("Beat plan OK | title=%r | beats=%d",
                 script.get("title"), len(parsed["beats"]))
     return parsed
@@ -275,11 +302,9 @@ if __name__ == "__main__":
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     beats = result["beats"]
-    text_ct = sum(1 for b in beats if b.get("text"))
-    worlds = {}
+    tier_dist = {1: 0, 2: 0, 3: 0}
     for b in beats:
-        worlds[b["visual_world"]] = worlds.get(b["visual_world"], 0) + 1
+        tier_dist[b["tier"]] = tier_dist.get(b["tier"], 0) + 1
     print(f"\n=== Beat plan: {len(beats)} beats ===")
-    print(f"Text density: {text_ct}/{len(beats)} ({text_ct * 100 // len(beats)}%)")
-    print(f"Visual worlds: {json.dumps(worlds, indent=2)}")
+    print(f"Tiers: {json.dumps(tier_dist)}")
     print(f"Saved -> {out_path}")

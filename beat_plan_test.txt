@@ -1,0 +1,501 @@
+BEAT PLAN — "Why Your Focus Dies at 2PM"
+51 beats | 30 Tier 1 | 10 Tier 2 | 11 Tier 3
+Generated: 2026-06-23
+Framework: situation → mood → query (standing instruction)
+
+================================================================
+[COLD OPEN - hook, 0:00-0:20]
+================================================================
+
+Beat 1
+{
+  "line": "Every afternoon, around the same time, it happens.",
+  "situation": "A man alone at a kitchen table, late afternoon. Golden light fading through a window, long shadows stretching across the floor. He stares at nothing. The room is still.",
+  "mood": "cool, dark, cinematic — heavy, inevitable, quietly dreadful",
+  "query": "long shadows empty room afternoon light",
+  "tier": 1
+}
+
+Beat 2
+{
+  "line": "You sit down to do the work that matters.",
+  "situation": "Hands pull out a chair at a desk. A laptop opens, screen glow catching the face. The posture is upright, deliberate — this person is trying.",
+  "mood": "cool, dark, cinematic — tense, purposeful, fragile",
+  "query": "man sitting desk laptop dark room",
+  "tier": 1
+}
+
+Beat 3
+{
+  "line": "And your brain just... won't.",
+  "situation": "Close-up: a man's hands go still on a keyboard. His head drops slightly. Eyes unfocused, staring through the screen. The room feels heavier now.",
+  "mood": "cool, dark, cinematic — defeated, hollow, still",
+  "query": "man staring blankly screen dark room",
+  "tier": 1
+}
+
+Beat 4
+{
+  "line": "The words blur. You read the same sentence three times.",
+  "situation": "Tight shot of a page or screen — text out of focus, slightly swimming. The man's finger traces a line, stops, goes back. His jaw tightens.",
+  "mood": "cool, dark, cinematic — frustrated, foggy, slipping",
+  "query": "blurred text page close-up dim light",
+  "tier": 1
+}
+
+Beat 5
+{
+  "line": "You reach for coffee, or your phone, or a snack - anything.",
+  "situation": "A hand reaches across a dark desk — fingers wrap around a coffee mug, then drift to a phone screen glowing in the dim. Restless, grasping for relief.",
+  "mood": "cool, dark, cinematic — restless, scattered, grasping",
+  "query": "hand reaching coffee mug dark desk",
+  "tier": 1
+}
+
+Beat 6
+{
+  "line": "And quietly, you tell yourself the same thing you always do: I have no discipline.",
+  "situation": "A man sits back in his chair, rubbing the bridge of his nose. Alone in a dim room. The weight is internal — shame sitting on his shoulders like gravity.",
+  "mood": "cool, dark, cinematic — ashamed, heavy, isolated",
+  "query": "man alone dim room head down",
+  "tier": 1
+}
+
+Beat 7
+{
+  "line": "You're wrong about that. Not kindly wrong. Factually wrong.",
+  "situation": "Hard cut — the frame shifts. A different angle, slightly wider. The same room but the light changes, as if the lens just blinked. A disruption. Something is about to be corrected.",
+  "mood": "cool, dark, cinematic — sharp, confrontational, certain",
+  "query": "dramatic light shift dark interior",
+  "tier": 2
+}
+
+Beat 8
+{
+  "line": "And once you see what's actually happening at 2PM, you'll stop fighting the wrong enemy.",
+  "situation": "Slow dolly into a window — outside, the afternoon sun hangs low and harsh. Inside, the room is all shadow. Two worlds: the bright truth outside, the dark assumptions within.",
+  "mood": "cool, dark, cinematic — ominous, revealing, charged",
+  "query": "window bright sunlight dark interior contrast",
+  "tier": 2
+}
+
+================================================================
+[THE FALSE CAUSE - 0:20-1:00]
+================================================================
+
+Beat 9
+{
+  "line": "Here's the story almost everyone tells themselves about the afternoon slump. I'm lazy. I lack willpower. Other people push through and I don't.",
+  "situation": "A man walks down a city sidewalk, shoulders hunched, while other pedestrians move past him purposefully. He's the only one standing still in a river of people who seem to know where they're going.",
+  "mood": "cool, dark, cinematic — small, inadequate, exposed",
+  "query": "lone man standing still crowded sidewalk",
+  "tier": 1
+}
+
+Beat 10
+{
+  "line": "It feels true, because it arrives right on cue - you're fine in the morning, you collapse after lunch, so you blame the most obvious suspect: yourself, and the sandwich you just ate.",
+  "situation": "Close-up of an empty plate, crumbs, a crumpled napkin on a table. The light is flat midday fluorescent. A hand pushes the plate away. The gesture says: this is the culprit.",
+  "mood": "cool, dark, cinematic — accusatory, mundane, misplaced",
+  "query": "empty lunch plate pushed away table",
+  "tier": 1
+}
+
+Beat 11
+{
+  "line": "That's the second myth. The 'food coma.' You ate too much, the blood rushed to your stomach, now you're slow. Everyone believes it.",
+  "situation": "A man leans back heavily in an office chair, hand on his stomach, eyes half-closed. Fluorescent light overhead. The posture screams: I did this to myself.",
+  "mood": "cool, dark, cinematic — sluggish, resigned, wrongly convicted",
+  "query": "man leaning back office chair eyes closed",
+  "tier": 1
+}
+
+Beat 12
+{
+  "line": "It's on every wellness blog.",
+  "situation": "A phone screen scrolling through bright, clean wellness content — pastel graphics, smoothie bowls, '10 TIPS' headers. The glow looks hollow against the dark room around it.",
+  "mood": "cool, dark, cinematic — shallow, performative, disposable",
+  "query": "phone scrolling bright screen dark room",
+  "tier": 1
+}
+
+Beat 13
+{
+  "line": "It's almost entirely wrong. And we can prove it.",
+  "situation": "The phone is placed face-down on the desk. Firm, deliberate. A hand flattens on the table. The gesture is a line in the sand.",
+  "mood": "cool, dark, cinematic — decisive, defiant, charged",
+  "query": "hand placing phone face down desk",
+  "tier": 1
+}
+
+================================================================
+[THE TURN - open the loop - 1:00-1:30]
+================================================================
+
+Beat 14
+{
+  "line": "Because here's the strange part. Scientists studied this dip in controlled conditions -",
+  "situation": "A sterile lab corridor, fluorescent-lit, long and empty. Institutional tile floor. The kind of place where things get measured, not felt.",
+  "mood": "cool, dark, cinematic — clinical, sterile, unsettling",
+  "query": "empty hospital corridor fluorescent lights",
+  "tier": 1
+}
+
+Beat 15
+{
+  "line": "and the crash still happened to people who ate no lunch at all.",
+  "situation": "An empty table in a bare room. No plate, no food, nothing. Just a person sitting with their head drooping, eyelids heavy. The absence is the proof.",
+  "mood": "cool, dark, cinematic — stark, undeniable, eerie",
+  "query": "person drowsy empty table bare room",
+  "tier": 2
+}
+
+Beat 16
+{
+  "line": "People who didn't even know what time it was. No food. No clock. Same dip. Same hour.",
+  "situation": "A windowless room. No clock on the wall — just blank space. A figure sits under flat light, chin dipping. Time has been removed, but the body still knows.",
+  "mood": "cool, dark, cinematic — isolated, disorienting, inevitable",
+  "query": "person sitting windowless room no clock",
+  "tier": 2
+}
+
+Beat 17
+{
+  "line": "So if it happens when you skip lunch entirely... it was never really about lunch.",
+  "situation": "Close-up of an untouched sandwich on a desk, perfectly wrapped, completely ignored. The camera slowly pulls back to reveal the person behind it, head in hand, fading.",
+  "mood": "cool, dark, cinematic — ironic, clarifying, quiet revelation",
+  "query": "untouched sandwich desk person slumping",
+  "tier": 1
+}
+
+Beat 18
+{
+  "line": "And if it arrives on a schedule whether you know the time or not... it was never about your willpower either. So what is it?",
+  "situation": "A long shadow of a window frame crawls across a bare floor — time passing without a clock. The shadow is the clock. The question hangs in the empty room.",
+  "mood": "cool, dark, cinematic — suspenseful, open, vertiginous",
+  "query": "window shadow moving across bare floor",
+  "tier": 3
+}
+
+================================================================
+[THE TRUE CAUSE - payoff #1 - 1:30-2:45]
+================================================================
+
+Beat 19
+{
+  "line": "You have an internal clock. Not a metaphor - a physical, biological rhythm running on roughly a 24-hour cycle, set deep in your brain.",
+  "situation": "Macro shot of a mechanical clock's gears turning — brass, precise, relentless. The rhythm is physical, undeniable. Not a concept. A machine.",
+  "mood": "cool, dark, cinematic — precise, mechanical, intimate",
+  "query": "clock gears turning macro dark",
+  "tier": 3
+}
+
+Beat 20
+{
+  "line": "It governs your body temperature, your hormones, your alertness.",
+  "situation": "Slow sequence: a breath visible in cold air. A pulse in a wrist, close-up. An eye dilating. The body doing its invisible work.",
+  "mood": "cool, dark, cinematic — visceral, biological, involuntary",
+  "query": "visible breath cold air close-up dark",
+  "tier": 2
+}
+
+Beat 21
+{
+  "line": "And it does not run flat across the day.",
+  "situation": "A long coastal shot — the ocean swelling, rising, not yet crashing. The waterline pulling upward. Something building that cannot stay level.",
+  "mood": "cool, dark, cinematic — building, unstoppable, elemental",
+  "query": "dark ocean wave slowly rising",
+  "tier": 3
+}
+
+Beat 22
+{
+  "line": "It has a peak in the late morning.",
+  "situation": "Morning light pouring through a tall window, sharp and clean. A man walks through it, silhouetted, moving with purpose. Everything is crisp.",
+  "mood": "cool, dark, cinematic — bright edge, confident, apex",
+  "query": "man silhouette walking morning window light",
+  "tier": 1
+}
+
+Beat 23
+{
+  "line": "Then, in the early afternoon, it dips - hard.",
+  "situation": "The same light from the window has shifted — now flat, grey, muted. The man is seated, still. The energy that filled the frame is gone.",
+  "mood": "cool, dark, cinematic — drained, heavy, collapsing",
+  "query": "man seated dim afternoon flat light",
+  "tier": 1
+}
+
+Beat 24
+{
+  "line": "This is built in. It's a real, measured trough in your alertness that shows up around the same time every day, independent of food, independent of effort.",
+  "situation": "A tide pulling back from a dark shore, water retreating over black stones. Slow, certain, rhythmic. It does this every day and nothing stops it.",
+  "mood": "cool, dark, cinematic — absolute, ancient, indifferent",
+  "query": "dark tide receding black stone shore",
+  "tier": 3
+}
+
+Beat 25
+{
+  "line": "Researchers have a dry name for it: the post-lunch dip. But the lunch is innocent. The clock is doing this.",
+  "situation": "An analogue clock face, close-up, ticking. The second hand sweeps past 2. The sound is the only thing in the room. The clock is the accused — and the guilty.",
+  "mood": "cool, dark, cinematic — pointed, ironic, convicted",
+  "query": "analogue clock face close-up ticking",
+  "tier": 3
+}
+
+Beat 26
+{
+  "line": "Think about what that means. At 2PM, you are not failing to concentrate.",
+  "situation": "A man at a desk, seen from above — papers, laptop, cold coffee. He looks small in the frame. But the angle is shifting: it's no longer accusation. It's understanding.",
+  "mood": "cool, dark, cinematic — compassionate, reframing, quiet",
+  "query": "overhead shot man desk papers dark",
+  "tier": 1
+}
+
+Beat 27
+{
+  "line": "Your biology is actively lowering your alertness, on schedule, the way it's done every day of your life.",
+  "situation": "Slow sunset timelapse — the light draining from a room, shadows expanding across walls. Not sudden. Gradual. The dimming is the schedule.",
+  "mood": "cool, dark, cinematic — inexorable, natural, slow-motion",
+  "query": "room light fading sunset timelapse shadows",
+  "tier": 3
+}
+
+Beat 28
+{
+  "line": "Fighting it with willpower is like trying to hold your breath against the urge to breathe.",
+  "situation": "Underwater shot — a person submerged, cheeks full, holding. Bubbles escape. The body is fighting itself. You can see the moment approaching when they have to surface.",
+  "mood": "cool, dark, cinematic — suffocating, futile, visceral",
+  "query": "person holding breath underwater bubbles",
+  "tier": 3
+}
+
+Beat 29
+{
+  "line": "You can do it for a bit. You will always lose.",
+  "situation": "The same underwater figure — lungs give out, the burst of air, the rush upward. Surrender. Not weakness. Physics.",
+  "mood": "cool, dark, cinematic — release, inevitable, raw",
+  "query": "person surfacing water gasping dark pool",
+  "tier": 3
+}
+
+Beat 30
+{
+  "line": "Not because you're weak - because you're human.",
+  "situation": "A man's face, close-up, catching his breath. Water on his skin or sweat. Eyes open. Present. The self-blame is lifting.",
+  "mood": "cool, dark, cinematic — tender, honest, grounded",
+  "query": "man close-up face catching breath dark",
+  "tier": 1
+}
+
+================================================================
+[RE-HOOK - open the next loop - 2:45-3:10]
+================================================================
+
+Beat 31
+{
+  "line": "Now - if it's biological and built-in, that sounds like bad news. Like you're stuck with it.",
+  "situation": "A heavy door, closed, iron or wood. Dim corridor. The framing says: dead end. Trapped.",
+  "mood": "cool, dark, cinematic — claustrophobic, boxed-in, resigned",
+  "query": "heavy closed door dark corridor",
+  "tier": 2
+}
+
+Beat 32
+{
+  "line": "But it's the opposite.",
+  "situation": "The same door — a sliver of light appears at the edge. It's opening. Just a crack. But the shift is everything.",
+  "mood": "cool, dark, cinematic — turning, hopeful edge, controlled",
+  "query": "door cracking open sliver light dark",
+  "tier": 2
+}
+
+Beat 33
+{
+  "line": "Because the moment you know the cause is a predictable rhythm instead of a character flaw, you get something willpower never gave you: a strategy.",
+  "situation": "A man stands at a window, looking out. His posture has changed — shoulders back, chin up. He's not defeated anymore. He's calculating.",
+  "mood": "cool, dark, cinematic — resolute, strategic, reclaimed",
+  "query": "man standing window looking out determined",
+  "tier": 1
+}
+
+Beat 34
+{
+  "line": "You stop trying to be stronger. You start working with the clock instead of against it.",
+  "situation": "A hand adjusts an analogue watch on a wrist — deliberately, carefully. Not fighting time. Reading it. Partnering with it.",
+  "mood": "cool, dark, cinematic — deliberate, calm, intelligent",
+  "query": "hand adjusting wristwatch close-up dark",
+  "tier": 1
+}
+
+================================================================
+[THE LEVER - payoff #2, the actionable part - 3:10-4:30]
+================================================================
+
+Beat 35
+{
+  "line": "Here's how. Three moves, all built on the same idea: stop spending your dip the way you spend your peak.",
+  "situation": "Three objects on a dark desk — a pen, a notebook, a glass of water — each lit separately by a narrow beam. Clean. Ordered. Ready.",
+  "mood": "cool, dark, cinematic — structured, prepared, minimal",
+  "query": "three objects desk spotlight dark",
+  "tier": 2
+}
+
+Beat 36
+{
+  "line": "One. Your late morning is your sharpest window. So protect it.",
+  "situation": "Morning light cutting through blinds in clean horizontal lines across a desk. The light is precise, almost weaponized. This window of time is a resource.",
+  "mood": "cool, dark, cinematic — sharp, valuable, guarded",
+  "query": "morning light through blinds desk sharp",
+  "tier": 1
+}
+
+Beat 37
+{
+  "line": "The hardest, most focus-heavy task of your day - the writing, the thinking, the thing you keep avoiding - goes there, not at 2PM.",
+  "situation": "A man writing by hand in a notebook, morning light on the page. Ink flowing. His face is focused, locked in. This is the brain at full power.",
+  "mood": "cool, dark, cinematic — absorbed, peak, flowing",
+  "query": "man writing notebook morning light focused",
+  "tier": 1
+}
+
+Beat 38
+{
+  "line": "Most people waste their peak on email and save their hardest work for their worst hour. Flip it.",
+  "situation": "Split feeling: an inbox full of unread emails glowing on a screen, trivial, noisy. Then a hard cut — a blank page waiting. The order is wrong. The reversal is the point.",
+  "mood": "cool, dark, cinematic — wasteful, then corrected, urgent",
+  "query": "email inbox glowing screen dark room",
+  "tier": 1
+}
+
+Beat 39
+{
+  "line": "Two. Stop assigning deep work to the dip at all.",
+  "situation": "A man pushes a heavy book to the side of his desk in the afternoon light. He's not quitting — he's rescheduling. The gesture is permission.",
+  "mood": "cool, dark, cinematic — relieving, wise, self-aware",
+  "query": "man pushing book aside desk afternoon",
+  "tier": 1
+}
+
+Beat 40
+{
+  "line": "The early afternoon is for the low-stakes stuff - admin, replies, organizing, routine tasks that don't need a sharp mind.",
+  "situation": "Hands sorting papers into folders. Filing. Mechanical, easy motion. The brain is on autopilot and that's fine — the task matches the state.",
+  "mood": "cool, dark, cinematic — unhurried, mundane, appropriate",
+  "query": "hands sorting papers folders dim office",
+  "tier": 1
+}
+
+Beat 41
+{
+  "line": "You're not lowering your standards. You're matching the task to the brain you actually have at that hour.",
+  "situation": "A man looks at his reflection in a dark monitor screen — not disappointed, not ashamed. Just seeing himself clearly. Acceptance in the glass.",
+  "mood": "cool, dark, cinematic — honest, grounded, self-respect",
+  "query": "man reflection dark computer screen",
+  "tier": 2
+}
+
+Beat 42
+{
+  "line": "Three. If you want to blunt the dip itself, two things genuinely help, and neither is caffeine.",
+  "situation": "A coffee cup sits untouched on a desk, steam curling. The hand bypasses it — reaches past it for something else. The familiar crutch, rejected.",
+  "mood": "cool, dark, cinematic — defiant, knowing, controlled",
+  "query": "coffee cup untouched hand reaching past",
+  "tier": 1
+}
+
+Beat 43
+{
+  "line": "A short walk - even ten minutes - and real light, ideally outdoors.",
+  "situation": "A man steps through a doorway into outdoor light. Trees, pavement, open sky. His shoulders drop. His pace is unhurried. The shift from interior dark to exterior light is the medicine.",
+  "mood": "cool, dark, cinematic — opening, breathing, transitional",
+  "query": "man stepping outside doorway into daylight",
+  "tier": 1
+}
+
+Beat 44
+{
+  "line": "Movement and light are direct signals to that internal clock that it's time to be alert.",
+  "situation": "Sunlight hitting the surface of water — ripples moving, light scattering. A natural pulse. The world's oldest alarm clock.",
+  "mood": "cool, dark, cinematic — alive, electric, primal",
+  "query": "sunlight rippling water surface close-up",
+  "tier": 3
+}
+
+Beat 45
+{
+  "line": "And one quiet bonus: a lighter, lower-carb lunch won't erase the dip, but it stops you amplifying it.",
+  "situation": "A simple plate — clean, sparse food, a glass of water. Not a feast. Not a punishment. Just calibration. The frame is minimal, intentional.",
+  "mood": "cool, dark, cinematic — modest, precise, measured",
+  "query": "simple light meal plate dark table",
+  "tier": 1
+}
+
+Beat 46
+{
+  "line": "The clock causes the dip. A heavy lunch just makes it worse.",
+  "situation": "An analogue clock on a wall — the hour hand sitting just past 2. Below it, a cleared table. The clock is in charge. Everything else is secondary.",
+  "mood": "cool, dark, cinematic — factual, final, settled",
+  "query": "wall clock past two empty table below",
+  "tier": 3
+}
+
+================================================================
+[CLOSE - land the thesis - 4:30-5:00]
+================================================================
+
+Beat 47
+{
+  "line": "So here's what actually happened every afternoon you called yourself lazy.",
+  "situation": "A man sitting at his desk, late afternoon — but now we see him differently. The same scene from beat 1, but the camera is closer, warmer. Recontextualized.",
+  "mood": "cool, dark, cinematic — reflective, reframing, gentle",
+  "query": "man sitting desk afternoon close angle",
+  "tier": 1
+}
+
+Beat 48
+{
+  "line": "Your body ran its clock. Right on time.",
+  "situation": "Close-up of a heartbeat pulse — a wrist, a vein, the rhythm visible under skin. Steady. Unbothered. The body was never broken.",
+  "mood": "cool, dark, cinematic — steady, certain, absolved",
+  "query": "wrist pulse close-up dark skin veins",
+  "tier": 2
+}
+
+Beat 49
+{
+  "line": "And you mistook a rhythm for a flaw - and then punished yourself for it.",
+  "situation": "A man's hand unclenching — fingers slowly releasing from a fist. Letting go of the self-accusation. The tension draining out of the knuckles.",
+  "mood": "cool, dark, cinematic — releasing, forgiving, raw",
+  "query": "hand unclenching fist slowly dark",
+  "tier": 2
+}
+
+Beat 50
+{
+  "line": "The people who seem to have endless afternoon discipline mostly don't. They've just stopped scheduling their hardest work inside their body's lowest hour. That's not willpower. That's design.",
+  "situation": "A clean desk, end of day. Laptop closed. Notebook squared away. A single lamp. The work is done — not by force, but by architecture. The room is calm.",
+  "mood": "cool, dark, cinematic — composed, elegant, resolved",
+  "query": "clean organized desk single lamp evening",
+  "tier": 1
+}
+
+Beat 51
+{
+  "line": "You were never lazy at 2PM. You were just fighting your own clock - and blaming yourself for losing.",
+  "situation": "Final shot: a man stands at a window, back to us, looking at the late afternoon sky. Not defeated. Not triumphant. Just still. He understands now. The light outside is golden, fading, and that's fine.",
+  "mood": "cool, dark, cinematic — peaceful, knowing, final",
+  "query": "man silhouette window late afternoon sky",
+  "tier": 1
+}
+
+================================================================
+STATS
+================================================================
+Total beats: 51
+Tier 1 (literal photographable): 30
+Tier 2 (concrete, specific framing): 10
+Tier 3 (abstract resolved via metaphor): 11
+Banned words used: 0
+Query length range: 4-7 words

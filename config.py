@@ -51,30 +51,24 @@ MECHANISM_CONFIDENCE_VALUES = ["solid", "partial", "check"]
 
 # --- Beats (stage 2) -------------------------------------------------------
 BEAT_MODEL = "claude-opus-4-8"
-BEAT_MAX_TOKENS = 8000
+BEAT_MAX_TOKENS = 12000
 BEAT_RETRY_ATTEMPTS = 3
 BEAT_MIN_SECONDS = 2
 BEAT_MAX_SECONDS = 4
-BEAT_MAX_TOKENS = 12000
-TARGET_BEATS_MIN = 75
-TARGET_BEATS_MAX = 130
-MOOD_TREATMENT = "low light, moody, cinematic, cool tone, shadows"
+TARGET_BEATS_MIN = 40
+TARGET_BEATS_MAX = 65
 
-VISUAL_WORLDS = {
-    "lone_silhouette": "a single backlit/shadowed figure",
-    "figure_in_landscape": "small human in a large natural scene",
-    "nature_atmosphere": "fog, ocean, rain, light-rays, city-at-dusk, sky",
-    "texture_abstract": "slow abstract motion, light, ink, particles, grain",
-    "intimate_closeup": "hands, eyes, breath, small human detail",
-    "slow_human_moment": "an unhurried, anonymous person doing something cinematic",
-}
+# --- TTS (stage 3) --------------------------------------------------------
+TTS_ENGINE = "edge-tts"
+TTS_VOICE = "en-US-AndrewMultilingualNeural"
+TTS_RATE = "-10%"
+TTS_PITCH = "-5Hz"
+ALIGN_MODEL = "whisper-large-v3"  # Groq Whisper fallback if edge-tts timings are too coarse
 
-# --- TTS + alignment (stage 4) --------------------------------------------
-ELEVENLABS_VOICE_ID = "PLACEHOLDER_PICK_A_DEEP_CALM_MALE_VOICE"  # TODO: user sets real ID
-TTS_MODEL = "eleven_multilingual_v2"
-ALIGN_MODEL = "whisper-large-v3"  # Groq Whisper for forced alignment of word timings
+# --- Visual direction is handled inside beat_plan (semantic framework) ----
+# No separate stage. Situation/mood/query discipline lives in beat_plan.py.
 
-# --- Background fetch (stage 3) -------------------------------------------
+# --- Background fetch (stage 4) -------------------------------------------
 # Degrade-never chain order; CC0 / no-attribution sources only.
 BACKGROUND_CHAIN = ["pexels", "pixabay", "coverr", "gradient"]
 PEXELS_ENABLED = True
