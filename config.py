@@ -104,10 +104,27 @@ BG_KENBURNS_ZOOM = 1.10      # constant over-scale base (bar-proof: single resiz
 BG_KENBURNS_PAN = 40         # max pan drift in px per axis
 BG_OVERLAY_OPACITY = 0.45    # darken footage for on-screen-text legibility
 
-# --- On-screen emphasis text (stage 5) ------------------------------------
-EMPHASIS_FONT_SIZE = 64
-EMPHASIS_COLOR = (240, 242, 245)  # near-white
-EMPHASIS_FADE = 0.5
+# --- Kinetic text: keyword punches (stage 5) ------------------------------
+PUNCH_FONT_SIZE = 64
+PUNCH_FONT_FAMILY = "Arial Bold"  # bold sans-serif; override with .ttf path
+PUNCH_COLOR = (240, 242, 245)     # near-white
+PUNCH_FADE_IN = 0.0               # sharp cut-in (appears like a cut, not a flourish)
+PUNCH_FADE_OUT = 0.35             # quick fade-out
+PUNCH_HOLD_MIN = 1.5              # seconds
+PUNCH_HOLD_MAX = 2.0              # seconds
+PUNCH_POSITION = "lower_third"    # "center" or "lower_third"; per-beat override allowed
+
+# --- Kinetic text: section cards (stage 5) --------------------------------
+CARD_FONT_SIZE = 88
+CARD_FONT_FAMILY = "Arial Bold"   # bold sans-serif; override with .ttf path
+CARD_COLOR = (240, 242, 245)      # near-white
+CARD_FADE_IN = 0.8                # seconds
+CARD_FADE_OUT = 0.8               # seconds
+CARD_BG_OPACITY = 0.85            # dark overlay — footage bleeds through at ~15%
+CARD_BG_COLOR = (8, 10, 14)       # matches VIDEO_BG_COLOR
+CARD_MAX_PER_VIDEO = 4            # hard cap: turn, re_hook, lever, close (+ keep_line)
+CARD_TRIGGER_ROLES = ["turn", "re_hook", "lever", "close"]
+CARD_KEEP_LINE = True             # the keep_line (proof sentence) always gets a card
 
 # --- Brand watermark -------------------------------------------------------
 BRAND_NAME = "Icarus Wings"

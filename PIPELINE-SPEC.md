@@ -194,8 +194,37 @@ beats: [
   - Frame = **1920×1080** (16:9), 30 fps.
   - Clip timing driven by **beat start/end** (from TTS timings).
   - **Unifying color-grade pass** — dark/cool LUT + grain on all footage.
-  - **Kinetic-text engine** — renders keyword overlays and text cards.
+  - **Kinetic-text engine** — hybrid: keyword punches + section cards.
   - Background darkening for text legibility.
+
+#### Kinetic-text engine (hybrid design)
+
+Two text types. No motion paths, no scaling, no bounce, no slide.
+**Opacity transitions only.** The footage moves; the text stays still and hits hard.
+
+**1. Keyword punches** — 1–3 key words from the narrator's current line.
+- Fade-in: **instant** (appears like a cut, not a flourish).
+- Hold: **1.5–2 seconds**.
+- Fade-out: **quick** (~0.35s).
+- Font: bold sans-serif, near-white `(240,242,245)`, 64pt.
+- Position: lower-third default; center when footage composition allows.
+- Frequency: not every beat — only when a word deserves visual weight.
+
+**2. Section cards** — full-overlay text at structural narrative beats.
+- **Maximum 4 per video**, triggered at: `turn`, `re_hook`, `lever intro`,
+  `close`.
+- The **keep_line** (the proof sentence / most important factual moment)
+  **always gets a section card** regardless of which section it falls in.
+- Overlay: dark bg at ~85% opacity (footage bleeds through at ~15%).
+- Font: bold sans-serif, near-white, 88pt.
+- Fade in/out: **0.8s** each.
+- No motion. Text centered on screen, static.
+
+**What NOT to do:**
+- No word-level karaoke (out of scope v1).
+- No text scaling or grow/shrink animations.
+- No slide-in from edges or bounce.
+- No color changes mid-animation.
 - **Motion/music feel:** slow Ken Burns drift + gentle crossfades; hard cuts
   reserved for the "turn" reveal; ambient bed swells at turn and close.
 - **Output:** final MP4 path.
@@ -217,8 +246,8 @@ beats: [
 - `BEAT_MIN_SECONDS≈2`, `BEAT_MAX_SECONDS≈4`, `TARGET_BEATS≈40..65`.
 - `MOOD_LUMA_*` selection filter (prefer dark/cool/slow); `GRADE_LUT`,
   `GRADE_GRAIN`.
-- `TEXT_*` — fonts (bold-sans + italic-serif), `ACCENT_COLOR` (cold icy
-  white-blue), card/overlay styles.
+- `PUNCH_*` — keyword punch config (font, fade, hold, position).
+- `CARD_*` — section card config (font, fade, overlay opacity, trigger roles).
 - Background chain order + per-source enable flags; reuse `PEXELS_*`,
   `FOOTAGE_HISTORY_MAX`.
 - Music/watermark constants reused from Shorts.
