@@ -92,6 +92,9 @@ MOOD_LUMA_LEGIBILITY_FLOOR = 18  # reject below this — too dark to read footag
 MOOD_COOL_BIAS_WEIGHT = 1.0  # weight on (blue - red) channel mean in the score
 MOOD_DARK_WEIGHT = 1.0       # weight on darkness preference in the score
 
+# --- Playback tempo (stage 5) ---------------------------------------------
+AUDIO_TEMPO = 1.20          # speed up both video and audio by 20%; video is shorter
+
 # --- Music & motion (stage 5) ---------------------------------------------
 MUSIC_PATH = os.path.join(ASSETS_DIR, "music", "ambient_bed.mp3")
 MUSIC_GAIN_DB = -18          # under the full-volume VO
@@ -102,7 +105,7 @@ BG_CROSSFADE = 0.8           # gentle crossfade between beats (default)
 BG_HARD_CUT_ROLE = "turn"    # this section's first beat is a hard cut (the reveal), no crossfade
 BG_KENBURNS_ZOOM = 1.10      # constant over-scale base (bar-proof: single resize)
 BG_KENBURNS_PAN = 40         # max pan drift in px per axis
-BG_OVERLAY_OPACITY = 0.45    # darken footage for on-screen-text legibility
+BG_OVERLAY_OPACITY = 0.60    # darken footage for on-screen-text legibility
 
 # --- Kinetic text: keyword punches (stage 5) ------------------------------
 PUNCH_FONT_SIZE = 64
@@ -130,6 +133,10 @@ CARD_KEEP_LINE = True             # the keep_line (proof sentence) always gets a
 BRAND_NAME = "Icarus Wings"
 WATERMARK_FONT_SIZE = 28
 WATERMARK_OPACITY = 0.35     # low-opacity wordmark, bottom corner
+
+# --- Color grade (stage 5) ------------------------------------------------
+GRADE_SATURATION = 0.78      # desaturate to 78% — cool, less vibrant stock feel
+GRADE_GRAIN_STRENGTH = 8     # film grain noise strength (0 = off)
 
 # --- Edge-brightness verification (stage 5) -------------------------------
 EDGE_SCAN_STRIP_PX = 15      # leftmost/rightmost strip width to sample

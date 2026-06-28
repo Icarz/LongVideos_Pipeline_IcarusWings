@@ -172,21 +172,28 @@ def _pick_best(candidates: list[dict], used_ids: set[str]) -> dict | None:
     return fresh[0]
 
 
+def _male_query(query: str) -> str:
+    """Append 'man' to steer results toward male subjects only."""
+    return query + " man"
+
+
 def _search_beat(query: str, client: httpx.Client,
                  used_ids: set[str]) -> dict | None:
     """Try query across Pexels → Pixabay. Return best clip or None."""
-    candidates = _pexels_search(query, client)
+    q = _male_query(query)
+
+    candidates = _pexels_search(q, client)
     pick = _pick_best(candidates, used_ids)
     if pick:
         return pick
 
-    candidates = _pixabay_search(query, client)
+    candidates = _pixabay_search(q, client)
     pick = _pick_best(candidates, used_ids)
     if pick:
         return pick
 
-    # Simplified fallback: first 4 words + "cinematic dark"
-    simple = " ".join(query.split()[:4]) + " cinematic dark"
+    # Simplified fallback: first 4 words + "man cinematic dark"
+    simple = " ".join(query.split()[:4]) + " man cinematic dark"
     logger.info("  simplified fallback query: %r", simple)
     candidates = _pexels_search(simple, client)
     pick = _pick_best(candidates, used_ids)
