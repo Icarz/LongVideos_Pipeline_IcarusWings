@@ -177,10 +177,16 @@ def _male_query(query: str) -> str:
     return query + " man"
 
 
-def _search_beat(query: str, client: httpx.Client,
+def _search_beat(beat: dict, client: httpx.Client,
                  used_ids: set[str]) -> dict | None:
-    """Try query across Pexels → Pixabay. Return best clip or None."""
-    q = _male_query(query)
+    """Try query across Pexels → Pixabay with mood enrichment and situation fallback."""
+    query = beat["query"]
+    mood_words = _extract_mood_words(beat.get("mood", ""))
+    mood_suffix = (" " + " ".join(mood_words)) if mood_words else ""
+
+    # A: mood-enriched primary query
+    q = _male_query(query) + mood_suffix
+    logger.info("  primary query: %r", q)
 
     candidates = _pexels_search(q, client)
     pick = _pick_best(candidates, used_ids)
@@ -192,13 +198,27 @@ def _search_beat(query: str, client: httpx.Client,
     if pick:
         return pick
 
-    # Simplified fallback: first 4 words + "man cinematic dark"
-    simple = " ".join(query.split()[:4]) + " man cinematic dark"
+    # Simplified fallback: first 4 words + mood (not hardcoded "cinematic dark")
+    simple = " ".join(query.split()[:4]) + " man" + mood_suffix
     logger.info("  simplified fallback query: %r", simple)
     candidates = _pexels_search(simple, client)
     pick = _pick_best(candidates, used_ids)
     if pick:
         return pick
+
+    # B: situation-derived query
+    if beat.get("situation"):
+        sit_q = _extract_situation_query(beat["situation"])
+        logger.info("  situation fallback query: %r", sit_q)
+        candidates = _pexels_search(sit_q, client)
+        pick = _pick_best(candidates, used_ids)
+        if pick:
+            return pick
+
+        candidates = _pixabay_search(sit_q, client)
+        pick = _pick_best(candidates, used_ids)
+        if pick:
+            return pick
 
     return None
 
@@ -246,6 +266,45 @@ def _gradient_fallback(beat_idx: int) -> str:
     except Exception as exc:
         logger.error("  gradient fallback failed: %s", exc)
     return path
+
+
+# ---------------------------------------------------------------------------
+# Mood + situation query helpers
+# ---------------------------------------------------------------------------
+
+_MOOD_VISUAL_WORDS = {
+    "dark", "dim", "bright", "warm", "cold", "cinematic", "moody",
+    "dramatic", "shadowed", "noir", "backlit", "silhouette", "foggy",
+    "hazy", "golden", "amber", "blue", "low-key", "contrast",
+}
+
+_SITUATION_STOPWORDS = {
+    "the", "and", "but", "for", "are", "with", "that", "this", "they",
+    "their", "from", "have", "been", "into", "through", "over", "each",
+    "were", "will", "when", "then", "them", "than", "also", "both",
+    "being", "what", "which", "while", "about", "after", "before",
+    "person", "face", "hand", "head", "eyes", "body", "room", "light",
+}
+
+
+def _extract_mood_words(mood: str) -> list[str]:
+    """Pull up to 2 visual/atmospheric words from the mood field."""
+    left = mood.split("—")[0] if "—" in mood else mood
+    words = [w.strip().lower().rstrip(",") for w in left.split()]
+    return [w for w in words if w in _MOOD_VISUAL_WORDS][:2]
+
+
+def _extract_situation_query(situation: str) -> str:
+    """Build a 5-word search query from the situation's first sentence."""
+    first = situation.split(".")[0]
+    words = first.lower().split()
+    clean = [
+        w.strip(".,;:\"'()")
+        for w in words
+        if len(w.strip(".,;:\"'()")) >= 4
+        and w.strip(".,;:\"'()") not in _SITUATION_STOPWORDS
+    ]
+    return " ".join(clean[:5]) + " man cinematic"
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +357,7 @@ def fetch_backgrounds(beats: list[dict]) -> dict:
             clip_path = None
             chosen_id = None
 
-            pick = _search_beat(query, client, used_ids)
+            pick = _search_beat(beat, client, used_ids)
             if pick:
                 try:
                     clip_path = _download_clip(
