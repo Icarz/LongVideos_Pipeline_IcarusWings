@@ -1,13 +1,10 @@
 # Long-form narrated-video pipeline — Python 3.12, Windows-first
 anthropic            # script_gen + beat_plan (Claude)
-elevenlabs           # TTS voiceover
+openai               # image_gen (gpt-image-1)
+edge-tts             # TTS voiceover
 groq                 # forced alignment (Whisper) for word/segment timings
-requests             # stock-footage HTTP (Pexels / Pixabay / Coverr)
-moviepy              # v2 render core (1920x1080 assembly)
-Pillow               # on-screen emphasis text + watermark rendering
-numpy                # frame analysis: mood scoring + edge-brightness scan
-opencv-python-headless  # optional: richer frame analysis; degrades gracefully if absent
-boto3                # Cloudflare R2 upload (S3-compatible)
-google-api-python-client  # YouTube Data API
-google-auth-oauthlib      # YouTube OAuth
+Pillow               # text cards, captions, watermark rendering
+boto3                # Cloudflare R2 upload (S3-compatible) — stage 6, not yet built
+google-api-python-client  # YouTube Data API — stage 6, not yet built
+google-auth-oauthlib      # YouTube OAuth — stage 6, not yet built
 python-dotenv        # .env loading

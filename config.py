@@ -71,11 +71,18 @@ ALIGN_MODEL  = "whisper-large-v3"
 # --- Image generation (stage 4) --------------------------------------------
 IMAGE_GEN_MODEL     = "gpt-image-1"
 IMAGE_GEN_SIZE      = "1536x1024"   # landscape — valid gpt-image-1 size
-IMAGE_GEN_QUALITY   = "standard"
+IMAGE_GEN_QUALITY   = "low"
 IMAGE_GEN_STYLE     = (
-    "minimalist black line-art stick figure illustration, "
-    "warm cream background, simple educational explainer style, "
-    "no color, no shading, clean and flat, single centered scene"
+    "A minimalist hand-drawn stick figure illustration in classic cartoon "
+    "style, black ink line art on a textured cream/beige paper background. "
+    "The figure has a perfectly round head with simple dot eyes, a small "
+    "smile, and a tuft of messy hair on top. The body and limbs are drawn "
+    "with thin, slightly wobbly, uniform-width black lines — no shading, "
+    "no thickness variation, no digital smoothness. Add small motion lines "
+    "near moving joints (hands, feet) to suggest action. Imperfect "
+    "hand-drawn linework, not vector, not smooth, slightly rough linework, "
+    "like it was drawn quickly with a fine-tip pen. Single centered scene, "
+    "no color"
 )
 IMAGE_GEN_CACHE_DIR = os.path.join(TMP_DIR, "image_cache")
 
@@ -120,12 +127,6 @@ CARD_KEEP_LINE = False   # no proof-sentence card in tips format
 BRAND_NAME          = "Icarus Wings"
 WATERMARK_FONT_SIZE = 28
 WATERMARK_OPACITY   = 0.25   # subtle on light background
-
-# --- Edge-brightness verification (stage 5) -------------------------------
-EDGE_SCAN_STRIP_PX  = 15
-EDGE_SCAN_INTERVAL_S = 2.0
-EDGE_DARK_THRESHOLD  = 8
-EDGE_BRIGHT_THRESHOLD = 15
 
 # --- Publish (stage 6) ----------------------------------------------------
 YOUTUBE_CATEGORY_ID     = "22"   # People & Blogs
