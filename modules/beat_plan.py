@@ -1,10 +1,11 @@
-"""Stage 2 — beat_plan: split a structured script into cinematic mood beats.
+"""Stage 2 — beat_plan: split a tips script into visual beats.
 
-Uses the standing instruction (semantic framework): every beat goes through
-situation → mood → query. Never literal, always cinematic.
+Each beat is classified as either:
+  - illustration : a stick-figure scene described by image_prompt
+  - text_card    : text displayed full-screen (title cards, quotes, principles)
 
 Input  : structured script dict from script_gen.
-Output : { beats: [{ line, situation, mood, query, tier, section_role }] }
+Output : { beats: [{ line, beat_type, image_prompt, card_text, section_role }] }
 """
 
 import json
@@ -22,90 +23,76 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-BANNED_QUERY_WORDS = {
-    "focus", "willpower", "discipline", "motivation", "biology",
-    "rhythm", "alertness", "energy", "productivity", "mindset",
-    "habit", "growth", "success", "failure", "struggle",
-}
-
-METAPHOR_TABLE = (
-    "- Energy draining → candle burning low in dark room\n"
-    "- Mental fog → dim window, rain-blurred glass\n"
-    "- Clock / time → analogue clock face, long shadows on floor\n"
-    "- Internal conflict → two hands gripping a desk edge\n"
-    "- Biological force → tide moving in dark water, slow exhale of breath"
-)
-
-TARGET_BEATS_MIN = 40
-TARGET_BEATS_MAX = 65
+TARGET_BEATS_MIN = config.TARGET_BEATS_MIN
+TARGET_BEATS_MAX = config.TARGET_BEATS_MAX
 
 SYSTEM_PROMPT = (
-    "You are the visual editor for Icarus Wings, a self-improvement channel. You take "
-    "a written script and break it into a BEAT MAP — an ordered list of mood beats that "
-    "define what footage to fetch for each line.\n\n"
+    "You are the visual editor for Icarus Wings, an educational YouTube channel. "
+    "You take a tips-format script and break it into a BEAT MAP — an ordered list "
+    "of visual beats that define what appears on screen for each line of narration.\n\n"
     "You MUST respond with ONLY a single valid JSON object — no markdown, no code "
     "fences, no commentary before or after.\n\n"
 
-    "## THE CORE RULE\n\n"
-    "Never read a script line literally. Always ask: what is the HUMAN SCENE underneath "
-    "this sentence? A person, a place, a physical moment, a feeling made visible. That "
-    "scene is what you fetch. The words are just the path to it.\n\n"
+    "## BEAT TYPES\n\n"
+    "Every beat is one of two types:\n\n"
 
-    "## PER-BEAT THREE-STEP PROCESS (mandatory, in order)\n\n"
-    "For every beat, run these three steps before writing the query:\n\n"
-    "1. SITUATION — translate the line into a physical human moment. Who, where, doing "
-    "what, feeling what. No abstractions allowed. Write it in plain language as if "
-    "describing a film shot to a cinematographer.\n"
-    "2. MOOD — apply the channel's visual identity to EVERY beat without exception: "
-    "cool, dark, cinematic, shadow-heavy, low-key lighting. Then add 1–2 specific "
-    "atmosphere words relevant to the beat (tense, still, exhausted, isolated, quietly "
-    "determined, etc). These travel with every query, always.\n"
-    "3. QUERY — combine situation + mood into a concrete 4–7 word fetch string. Must "
-    "name a literal, photographable object or scene. If you can't point a camera at it, "
-    "rewrite it.\n\n"
+    "### text_card\n"
+    "Full-screen text on the cream background. Use for:\n"
+    "- Tip title announcements ('Tip 1: Trick Your Brain')\n"
+    "- Named principles or laws ('Parkinson's Law: Work expands to fill the time you allow')\n"
+    "- Punchy one-line quotes or rules\n"
+    "- The outro cheat sheet items\n"
+    "For text_card beats: write the exact text to display in `card_text`. "
+    "Use \\n for line breaks. Keep it short — max 2 lines, max 8 words per line. "
+    "`image_prompt` must be null.\n\n"
 
-    "## HARD-BANNED QUERY WORDS\n\n"
-    "These return useless generic stock — if you write one, go one layer deeper into "
-    "the physical scene:\n\n"
-    "focus, willpower, discipline, motivation, biology, rhythm, alertness, energy, "
-    "productivity, mindset, habit, growth, success, failure, struggle\n\n"
+    "### illustration\n"
+    "A minimalist black stick-figure scene on cream background. Use for:\n"
+    "- Problem demonstrations ('most students re-read their notes...')\n"
+    "- How-to steps ('set a 20-minute timer and start')\n"
+    "- Consequences or results\n"
+    "- Any narration that describes a person doing something\n"
+    "For illustration beats: write a 1-sentence stick-figure scene description in "
+    "`image_prompt`. Be specific: who is doing what, what object or prop is visible. "
+    "Examples:\n"
+    "  - 'stick figure sitting at desk staring at clock looking bored'\n"
+    "  - 'stick figure teaching a small child at a whiteboard'\n"
+    "  - 'stick figure running up a rising arrow graph'\n"
+    "`card_text` must be null.\n\n"
 
-    "## TIERS\n\n"
-    "Classify every beat:\n"
-    "- Tier 1: the line describes a literal, photographable scene.\n"
-    "- Tier 2: concrete but needs specific framing or staging.\n"
-    "- Tier 3: abstract concept — you MUST resolve it into a cinematic METAPHOR in the "
-    "situation layer. Choose a physical object that carries the feeling. Never pass an "
-    "abstraction to the query.\n\n"
-
-    "## TIER 3 METAPHOR TARGETS (use these or invent similar)\n\n"
-    + METAPHOR_TABLE + "\n\n"
-
-    "## BEAT RULES\n\n"
+    "## RULES\n\n"
     "- Break the ENTIRE script (hook + all sections) into ordered beats.\n"
-    "- Each beat covers one or a few sentences — a natural visual unit.\n"
-    "- Beats must cover ALL narration in order — no words skipped or repeated.\n"
-    f"- Target: {TARGET_BEATS_MIN}–{TARGET_BEATS_MAX} beats for a ~800-word script.\n"
-    "- Every beat carries a section_role.\n\n"
-
-    "## SECTION ROLES\n\n"
-    "Use exactly: hook, false_cause, turn, true_cause, re_hook, lever, close\n\n"
+    "- Each beat = one natural sentence or phrase from the narration.\n"
+    "- Every word of the script must appear in exactly one beat's `line`. No skipping.\n"
+    f"- Target: {TARGET_BEATS_MIN}–{TARGET_BEATS_MAX} beats total.\n"
+    "- Tip sections: open with a text_card (the tip title), then alternate "
+    "illustration and text_card as the content demands.\n"
+    "- Outro: each cheat sheet item is its own text_card beat.\n"
+    "- `section_role` must match the section the line comes from.\n\n"
 
     "## OUTPUT JSON\n\n"
-    "Return exactly:\n"
+    'Return exactly:\n'
     '{"beats": [\n'
-    '  {"line": "exact words from script",\n'
-    '   "situation": "plain-language film shot description (2-3 sentences)",\n'
-    '   "mood": "cool, dark, cinematic — [specific atmosphere words]",\n'
-    '   "query": "concrete 4-7 word fetch query",\n'
-    '   "tier": 1,\n'
-    '   "section_role": "hook"}\n'
-    "]}\n"
+    '  {\n'
+    '    "line": "exact words from the script narration",\n'
+    '    "beat_type": "text_card",\n'
+    '    "card_text": "Tip 1:\\nTrick Your Brain",\n'
+    '    "image_prompt": null,\n'
+    '    "section_role": "tip_1"\n'
+    '  },\n'
+    '  {\n'
+    '    "line": "Most students sit down with no end in mind.",\n'
+    '    "beat_type": "illustration",\n'
+    '    "card_text": null,\n'
+    '    "image_prompt": "stick figure sitting at desk looking overwhelmed, pile of books nearby",\n'
+    '    "section_role": "tip_1"\n'
+    '  }\n'
+    ']}\n'
 )
 
 CALIBRATION_INSTRUCTION = (
-    "\n\nCALIBRATION MODE: Generate beats for ONLY the first 3 sentences of the "
-    "hook. Stop after 3 beats. This is a calibration check."
+    "\n\nCALIBRATION MODE: Generate beats for ONLY the hook + intro section. "
+    "Stop after those. This is a calibration check."
 )
 
 
@@ -141,7 +128,10 @@ def _format_script(script: dict) -> str:
     parts = ["SCRIPT TO BEAT-MAP:\n"]
     parts.append(f"[HOOK]\n{script['hook']}\n")
     for section in script["sections"]:
-        parts.append(f"[{section['role'].upper()}]\n{section['text']}\n")
+        role = section["role"]
+        tip_name = section.get("tip_name", "")
+        label = f"{role.upper()} — {tip_name}" if tip_name else role.upper()
+        parts.append(f"[{label}]\n{section['text']}\n")
     word_count = len(_script_full_text(script).split())
     parts.append(f"\nTotal words: ~{word_count}")
     parts.append(f"Target beats: {TARGET_BEATS_MIN}–{TARGET_BEATS_MAX}")
@@ -155,83 +145,67 @@ def _validate(data: dict, calibration: bool = False) -> None:
     beats = data["beats"]
 
     if calibration:
-        if len(beats) < 1 or len(beats) > 5:
-            raise ValueError(f"Calibration: expected 1-5 beats, got {len(beats)}")
+        if len(beats) < 1 or len(beats) > 10:
+            raise ValueError(f"Calibration: expected 1-10 beats, got {len(beats)}")
     else:
         if len(beats) < TARGET_BEATS_MIN * 0.7:
-            raise ValueError(
-                f"Too few beats: {len(beats)} (need ~{TARGET_BEATS_MIN}+)")
+            raise ValueError(f"Too few beats: {len(beats)} (need ~{TARGET_BEATS_MIN}+)")
         if len(beats) > TARGET_BEATS_MAX * 1.3:
-            raise ValueError(
-                f"Too many beats: {len(beats)} (max ~{TARGET_BEATS_MAX})")
+            raise ValueError(f"Too many beats: {len(beats)} (max ~{TARGET_BEATS_MAX})")
 
     valid_roles = {"hook"} | set(config.SCRIPT_SECTION_ROLES)
 
     for i, beat in enumerate(beats):
-        for field in ("line", "situation", "mood", "query", "tier", "section_role"):
+        for field in ("line", "beat_type", "image_prompt", "card_text", "section_role"):
             if field not in beat:
                 raise ValueError(f"Beat {i}: missing '{field}'")
 
         if not isinstance(beat["line"], str) or not beat["line"].strip():
             raise ValueError(f"Beat {i}: 'line' must be non-empty")
 
-        if not isinstance(beat["situation"], str) or len(beat["situation"]) < 20:
-            raise ValueError(f"Beat {i}: 'situation' too short — describe the shot")
-
-        mood = beat.get("mood", "")
-        if not mood.lower().startswith("cool, dark, cinematic"):
+        bt = beat["beat_type"]
+        if bt not in config.BEAT_TYPES:
             raise ValueError(
-                f"Beat {i}: mood must start with 'cool, dark, cinematic'. "
-                f"Got: '{mood[:40]}'")
+                f"Beat {i}: beat_type '{bt}' invalid. Must be one of {config.BEAT_TYPES}"
+            )
 
-        query = beat.get("query", "")
-        words = query.split()
-        if len(words) < 4:
-            raise ValueError(
-                f"Beat {i}: query too short ({len(words)} words): '{query}'")
-        if len(words) > 7:
-            raise ValueError(
-                f"Beat {i}: query too long ({len(words)} words): '{query}'")
-
-        query_lower = query.lower()
-        for banned in BANNED_QUERY_WORDS:
-            if banned in query_lower.split():
+        if bt == "illustration":
+            if not isinstance(beat.get("image_prompt"), str) or not beat["image_prompt"].strip():
                 raise ValueError(
-                    f"Beat {i}: query contains banned word '{banned}': '{query}'")
-
-        if beat["tier"] not in (1, 2, 3):
-            raise ValueError(f"Beat {i}: tier must be 1, 2, or 3, got {beat['tier']}")
+                    f"Beat {i}: illustration beat requires a non-empty 'image_prompt'"
+                )
+            if beat.get("card_text") is not None:
+                raise ValueError(
+                    f"Beat {i}: illustration beat must have card_text=null"
+                )
+        else:  # text_card
+            if not isinstance(beat.get("card_text"), str) or not beat["card_text"].strip():
+                raise ValueError(
+                    f"Beat {i}: text_card beat requires a non-empty 'card_text'"
+                )
+            if beat.get("image_prompt") is not None:
+                raise ValueError(
+                    f"Beat {i}: text_card beat must have image_prompt=null"
+                )
 
         if beat["section_role"] not in valid_roles:
             raise ValueError(
-                f"Beat {i}: section_role '{beat['section_role']}' invalid")
+                f"Beat {i}: section_role '{beat['section_role']}' invalid"
+            )
 
     if not calibration:
-        if len(beats) < 45:
-            logger.warning(
-                "Beat count %d is below 45 — review pacing on render", len(beats))
-
-        role_order = ["hook"] + config.SCRIPT_SECTION_ROLES
-        seen = []
-        for beat in beats:
-            r = beat["section_role"]
-            if not seen or seen[-1] != r:
-                seen.append(r)
-        expected = [r for r in role_order if r in seen]
-        if seen != expected:
-            raise ValueError(f"Section roles out of order: {seen}")
-
-    tier_dist = {1: 0, 2: 0, 3: 0}
-    for b in beats:
-        tier_dist[b["tier"]] = tier_dist.get(b["tier"], 0) + 1
-    logger.info(
-        "Validation passed | beats=%d | tiers=%s",
-        len(beats),
-        " ".join(f"t{k}:{v}" for k, v in sorted(tier_dist.items())))
+        type_dist = {"illustration": 0, "text_card": 0}
+        for b in beats:
+            type_dist[b["beat_type"]] = type_dist.get(b["beat_type"], 0) + 1
+        logger.info(
+            "Validation passed | beats=%d | types=%s",
+            len(beats),
+            " ".join(f"{k}:{v}" for k, v in type_dist.items()),
+        )
 
 
 def generate_calibration_beats(script: dict) -> dict:
-    """Generate only the first 3 hook beats for human review (calibration gate)."""
+    """Generate beats for the hook + intro only (calibration gate)."""
     user_body = _format_script(script) + CALIBRATION_INSTRUCTION
 
     logger.info("Generating calibration beats via %s", config.BEAT_MODEL)
@@ -282,8 +256,7 @@ def generate_beat_plan_with_retry(
             return generate_beat_plan(script)
         except (ValueError, json.JSONDecodeError) as exc:
             last_exc = exc
-            logger.warning("beat_plan attempt %d/%d failed: %s",
-                           attempt, attempts, exc)
+            logger.warning("beat_plan attempt %d/%d failed: %s", attempt, attempts, exc)
     raise last_exc
 
 
@@ -302,9 +275,13 @@ if __name__ == "__main__":
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     beats = result["beats"]
-    tier_dist = {1: 0, 2: 0, 3: 0}
+    type_dist = {"illustration": 0, "text_card": 0}
     for b in beats:
-        tier_dist[b["tier"]] = tier_dist.get(b["tier"], 0) + 1
+        type_dist[b["beat_type"]] = type_dist.get(b["beat_type"], 0) + 1
     print(f"\n=== Beat plan: {len(beats)} beats ===")
-    print(f"Tiers: {json.dumps(tier_dist)}")
-    print(f"Saved -> {out_path}")
+    print(f"Types: {json.dumps(type_dist)}")
+    print(f"\nFirst 6 beats:")
+    for b in beats[:6]:
+        content = b.get("card_text") or b.get("image_prompt") or ""
+        print(f"  [{b['beat_type']:12s}] [{b['section_role']:8s}] {content[:60]}")
+    print(f"\nSaved -> {out_path}")

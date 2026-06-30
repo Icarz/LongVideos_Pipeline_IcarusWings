@@ -1,27 +1,30 @@
-# Stage 5 - compositor: assemble final MP4 from beats, clips, TTS, and text overlays.
+# Stage 5 - compositor: assemble final MP4 from beats, images, TTS, and text overlays.
 #
 # Input  : tmp/script_01.json, tmp/beats_01.json, tmp/tts_timings_01.json,
-#          tmp/clips_manifest_01.json
+#          tmp/clips_manifest_01.json  (beat_images: [path_or_null, ...])
 # Output : output/video_01.mp4
 #
+# Beat types:
+#   illustration — PNG centered on cream canvas, static hold, fade in/out
+#   text_card    — Pillow renders card_text on cream canvas, encoded to clip
+#
 # Steps:
-#   1. Cut and sequence background clips to beat timing from TTS
-#   2. Apply Ken Burns (eased pan, section-aware) per clip
-#   3. Darken footage with cinematic curves filter
-#   4. Burn in keyword punches (bold white + dark box + stroke, lower-third)
-#   5. Burn in section cards (full-screen, structural beats)
+#   1. Map beat timings via TTS segment boundaries
+#   2. For each beat: encode illustration or text_card clip
+#   3. Concat all clips
+#   4. Burn in beat captions (illustration beats only, dark text)
+#   5. Add brand watermark
 #   6. Mix music bed at -18 dB under voiceover
-#   7. Add brand watermark (bottom corner, low opacity)
-#   8. Write final MP4 via FFmpeg
+#   7. Write final MP4 via FFmpeg
 
 import json
 import logging
-import math
 import os
-import random
 import re
 import subprocess
 from collections import defaultdict
+
+from PIL import Image, ImageDraw, ImageFont
 
 import config
 
@@ -32,27 +35,20 @@ COMP_DIR = os.path.join(config.TMP_DIR, "comp")
 _WINDOWS_FONTS = {
     "Arial Bold": "C:/Windows/Fonts/arialbd.ttf",
     "Arial":      "C:/Windows/Fonts/arial.ttf",
+    "Georgia":    "C:/Windows/Fonts/georgia.ttf",
+    "Times":      "C:/Windows/Fonts/times.ttf",
 }
 
-# Curated card labels — shown full-screen at the first beat of each trigger role
+# Section card labels for tip roles (used if overlay cards are needed)
 _CARD_LABELS = {
-    "turn":       "THE TURN",
-    "re_hook":    "BUT WAIT",
-    "lever":      "THE FIX",
-    "close":      "THE TRUTH",
-    "true_cause": "THE REAL CAUSE",
-    "false_cause": "THE MYTH",
-}
-
-# Camera move per section role — controls pan direction and framing
-_ROLE_CAMERA = {
-    "hook":        "zoom_in",
-    "false_cause": "pan",
-    "turn":        "push_in",    # dramatic centered push — pairs with hard cut
-    "true_cause":  "zoom_out",
-    "re_hook":     "pan",
-    "lever":       "zoom_in",
-    "close":       "drift",      # slow centered drift for the emotional close
+    "intro":  "INTRO",
+    "tip_1":  "TIP 1",
+    "tip_2":  "TIP 2",
+    "tip_3":  "TIP 3",
+    "tip_4":  "TIP 4",
+    "tip_5":  "TIP 5",
+    "tip_6":  "TIP 6",
+    "outro":  "YOUR CHEAT SHEET",
 }
 
 
@@ -89,11 +85,15 @@ def _find_font(family):
     path = _WINDOWS_FONTS.get(family)
     if path and os.path.exists(path):
         return path
-    raise RuntimeError("Font not found: %r. Set PUNCH_FONT_FAMILY to a .ttf path." % family)
+    # Fallback to Arial if requested font missing
+    fallback = _WINDOWS_FONTS.get("Arial")
+    if fallback and os.path.exists(fallback):
+        logger.warning("Font %r not found — falling back to Arial", family)
+        return fallback
+    raise RuntimeError("Font not found: %r. Set CARD_FONT_FAMILY to a .ttf path." % family)
 
 
 def _dt_text(s):
-    # Strip curly apostrophes; escape filter-separator characters
     s = re.sub(r"[''‚‛']", "", s)
     s = s.replace("\\", "\\\\")
     s = s.replace(":", "\\:")
@@ -105,7 +105,8 @@ def _dt_path(p):
     return p.replace("\\", "/").replace("'", "\\'").replace(":", "\\:")
 
 
-def _dt(font, size, color, text, x, y, enable=None, border=0, box=False, boxcolor=None, boxborderw=0):
+def _dt(font, size, color, text, x, y, enable=None, border=0, box=False,
+        boxcolor=None, boxborderw=0):
     parts = [
         "drawtext=fontfile='%s'" % _dt_path(font),
         "fontsize=%d" % size,
@@ -115,10 +116,10 @@ def _dt(font, size, color, text, x, y, enable=None, border=0, box=False, boxcolo
         "y=%s" % y,
     ]
     if border > 0:
-        parts += ["bordercolor=black", "borderw=%d" % border]
+        parts += ["bordercolor=white", "borderw=%d" % border]
     if box:
         parts.append("box=1")
-        parts.append("boxcolor=%s" % (boxcolor or "black@0.6"))
+        parts.append("boxcolor=%s" % (boxcolor or "white@0.6"))
         if boxborderw > 0:
             parts.append("boxborderw=%d" % boxborderw)
     if enable:
@@ -127,7 +128,6 @@ def _dt(font, size, color, text, x, y, enable=None, border=0, box=False, boxcolo
 
 
 def _wrap_lines(text, max_chars=44):
-    """Split text into screen-width lines for caption display."""
     words = text.split()
     lines, current, length = [], [], 0
     for word in words:
@@ -143,11 +143,14 @@ def _wrap_lines(text, max_chars=44):
     return lines
 
 
-def _make_black_clip(dur, out_path):
+def _make_cream_clip(dur, out_path):
+    """Solid cream background clip — fallback when image encoding fails."""
     W, H = config.VIDEO_WIDTH, config.VIDEO_HEIGHT
+    r, g, b = config.VIDEO_BG_COLOR
+    color_hex = "#%02x%02x%02x" % (r, g, b)
     _ffmpeg(
         "-f", "lavfi",
-        "-i", "color=c=black:s=%dx%d:r=%d" % (W, H, config.VIDEO_FPS),
+        "-i", "color=c=%s:s=%dx%d:r=%d" % (color_hex, W, H, config.VIDEO_FPS),
         "-t", str(dur),
         "-c:v", config.VIDEO_CODEC,
         "-preset", "fast",
@@ -189,15 +192,12 @@ def _map_beat_timings(beats, tts_segments, tts_words):
         total_words = sum(word_counts)
         seg_dur     = max(seg_end - seg_start, 0.1)
 
-        # Proportional distribution by word count
         raw_durs = [seg_dur * (wc / total_words) for wc in word_counts]
 
-        # Clamp each beat to [BEAT_MIN_SECONDS, BEAT_MAX_SECONDS]
         min_s   = float(config.BEAT_MIN_SECONDS)
         max_s   = float(config.BEAT_MAX_SECONDS)
         clamped = [max(min_s, min(max_s, d)) for d in raw_durs]
 
-        # Rescale so the segment total still matches the TTS window exactly
         total_clamped = sum(clamped)
         if total_clamped > 0:
             scale   = seg_dur / total_clamped
@@ -208,7 +208,6 @@ def _map_beat_timings(beats, tts_segments, tts_words):
             timed[orig_idx] = dict(beat, start=round(t, 3), end=round(t + dur, 3))
             t += dur
 
-    # Fill any beats whose role had no TTS segment
     last_end = 0.0
     for i in range(len(timed)):
         if timed[i] is None:
@@ -222,117 +221,82 @@ def _map_beat_timings(beats, tts_segments, tts_words):
 
 
 # ---------------------------------------------------------------------------
-# Steps 2 & 3: Prepare individual beat clips (Ken Burns + cinematic dark + fades)
+# Step 2a: Render text_card PNG via Pillow
 # ---------------------------------------------------------------------------
 
-def _prepare_beat_clip(clip_path, beat_duration, beat_idx, role):
+def _render_text_card_png(card_text: str, beat_idx: int) -> str:
+    """Render card_text centered on cream canvas. Returns PNG path."""
     os.makedirs(COMP_DIR, exist_ok=True)
-    out = os.path.join(COMP_DIR, "beat_%03d.mp4" % beat_idx)
-    if os.path.exists(out) and os.path.getsize(out) > 1000:
-        return out  # resume-safe
+    out_png = os.path.join(COMP_DIR, "card_%03d.png" % beat_idx)
+    if os.path.exists(out_png):
+        return out_png
 
-    dur = max(beat_duration, 0.5)
+    W, H = config.VIDEO_WIDTH, config.VIDEO_HEIGHT
+    r, g, b = config.VIDEO_BG_COLOR
+    img  = Image.new("RGB", (W, H), (r, g, b))
+    draw = ImageDraw.Draw(img)
+
+    tr, tg, tb = config.TEXT_COLOR_DARK
+
+    # Try serif font for title cards, fall back gracefully
+    font_path = _WINDOWS_FONTS.get(config.CARD_FONT_FAMILY)
+    font_size = config.CARD_FONT_SIZE
 
     try:
-        _encode_beat_clip(clip_path, dur, beat_idx, role, out)
-    except Exception as e:
-        logger.error("Beat %d failed (%s): %s — black fallback", beat_idx, clip_path, e)
-        if os.path.exists(out):
-            os.remove(out)
-        _make_black_clip(dur, out)
+        font = ImageFont.truetype(font_path, font_size)
+    except Exception:
+        try:
+            font = ImageFont.truetype(_WINDOWS_FONTS.get("Arial Bold", ""), font_size)
+        except Exception:
+            font = ImageFont.load_default()
 
-    return out
+    lines = card_text.split("\n")
+    line_spacing = int(font_size * 1.35)
+    total_h = len(lines) * line_spacing - (line_spacing - font_size)
+
+    y = (H - total_h) // 2
+    for line in lines:
+        bbox     = draw.textbbox((0, 0), line, font=font)
+        text_w   = bbox[2] - bbox[0]
+        x        = (W - text_w) // 2
+        draw.text((x, y), line, font=font, fill=(tr, tg, tb))
+        y += line_spacing
+
+    img.save(out_png)
+    return out_png
 
 
-def _encode_beat_clip(clip_path, dur, beat_idx, role, out):
-    W   = config.VIDEO_WIDTH
-    H   = config.VIDEO_HEIGHT
-    FPS = config.VIDEO_FPS
+# ---------------------------------------------------------------------------
+# Step 2b: Encode illustration PNG → video clip (static, fade in/out)
+# ---------------------------------------------------------------------------
 
-    src_dur = _probe_duration(clip_path)
-    if src_dur < dur:
-        loops   = math.ceil(dur / src_dur) + 1
-        in_args = ["-stream_loop", str(loops), "-i", clip_path]
-    else:
-        in_args = ["-i", clip_path]
+def _encode_illustration_clip(png_path: str, dur: float, beat_idx: int,
+                               role: str, out: str) -> None:
+    W, H = config.VIDEO_WIDTH, config.VIDEO_HEIGHT
+    r, g, b = config.VIDEO_BG_COLOR
+    bg_hex = "#%02x%02x%02x" % (r, g, b)
 
-    # --- Ken Burns: scale oversized, then eased crop pan ---
-    ow = int(W * config.BG_KENBURNS_ZOOM)
-    oh = int(H * config.BG_KENBURNS_ZOOM)
-    px = ow - W   # max horizontal travel
-    py = oh - H   # max vertical travel
-
-    cam = _ROLE_CAMERA.get(role, "zoom_in")
-
-    # Seeded random pan direction (reproducible per beat index)
-    rng  = random.Random(beat_idx * 1337 + 7)
-    dirs = [(1, 1), (-1, 1), (1, -1), (-1, -1),
-            (1, 0), (-1, 0), (0, 1), (0, -1)]
-    dx, dy = rng.choice(dirs)
-
-    # Ease-in-out using cosine: pos = max * (1 - cos(PI * t/dur)) / 2
-    # Forward: 0 → px;  Reverse: px → 0
-    pi_d = "%.6f" % (3.14159265 / max(dur, 0.01))
-
-    if cam == "push_in":
-        # Centered static crop — hard cut (no fade-in) signals the turn
-        x_expr = "'trunc(%d/2)'" % px
-        y_expr = "'trunc(%d/2)'" % py
-
-    elif cam == "drift":
-        # Slow horizontal drift around center for the emotional close
-        amp    = max(px // 4, 1)
-        x_expr = "'trunc(%d/2+%d*sin(%.6f*t))'" % (px, amp, 3.14159265 / max(dur, 0.01))
-        y_expr = "'trunc(%d/2)'" % py
-
-    else:
-        # Eased pan in randomized direction
-        if dx >= 0:
-            x_expr = "'trunc(%d*(1-cos(%s*t))/2)'" % (px, pi_d)
-        else:
-            x_expr = "'trunc(%d*(1+cos(%s*t))/2)'" % (px, pi_d)
-
-        if dy >= 0:
-            y_expr = "'trunc(%d*(1-cos(%s*t))/2)'" % (py, pi_d)
-        else:
-            y_expr = "'trunc(%d*(1+cos(%s*t))/2)'" % (py, pi_d)
-
-    # --- Cinematic darkening: curves filter (non-linear, preserves blacks) ---
-    dark  = 1.0 - config.BG_OVERLAY_OPACITY
-    mid   = dark * 0.60
-    curve = "curves=all='0/0 0.5/%.3f 1/%.3f'" % (mid, dark)
-
-    # --- Cool color grade: desaturate + push blue channel ---
-    grade = (
-        "hue=s=%.2f," % config.GRADE_SATURATION +
-        "colorchannelmixer=rr=0.88:rb=0.04:gg=0.92:gb=0.03:br=0.02:bb=1.06"
-    )
-
-    # --- Film grain ---
-    grain = ""
-    if config.GRADE_GRAIN_STRENGTH > 0:
-        grain = ",noise=c0s=%d:c0f=t+u" % config.GRADE_GRAIN_STRENGTH
-
-    # Fade in/out baked per clip — turn gets no fade-in (hard cut)
     fade_dur = min(0.35, dur * 0.12)
-    fade_out = "fade=t=out:st=%.3f:d=%.3f" % (max(0.0, dur - fade_dur), fade_dur)
+    fade_out = "fade=t=out:st=%.3f:d=%.3f:color=%s" % (
+        max(0.0, dur - fade_dur), fade_dur, bg_hex[1:])
+
     if role == config.BG_HARD_CUT_ROLE:
         fades = fade_out
     else:
-        fade_in = "fade=t=in:st=0:d=%.3f" % fade_dur
+        fade_in = "fade=t=in:st=0:d=%.3f:color=%s" % (fade_dur, bg_hex[1:])
         fades   = "%s,%s" % (fade_in, fade_out)
 
+    # Scale to fit 1920x1080 preserving aspect ratio; pad remainder with cream
     vf = (
-        "scale=%d:%d," % (ow, oh) +
-        "crop=%d:%d:x=%s:y=%s," % (W, H, x_expr, y_expr) +
-        "%s," % curve +
-        "%s%s," % (grade, grain) +
-        "fps=%d," % FPS +
+        "scale=%d:%d:force_original_aspect_ratio=decrease," % (W, H) +
+        "pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=%s," % (W, H, bg_hex[1:]) +
+        "fps=%d," % config.VIDEO_FPS +
         fades
     )
 
     _ffmpeg(
-        *in_args,
+        "-loop", "1",
+        "-i", png_path,
         "-t", str(dur),
         "-vf", vf,
         "-an",
@@ -340,15 +304,50 @@ def _encode_beat_clip(clip_path, dur, beat_idx, role, out):
         "-preset", "fast",
         "-pix_fmt", "yuv420p",
         out,
-        timeout=180,
+        timeout=60,
     )
 
 
 # ---------------------------------------------------------------------------
-# Concatenate beat clips — fades baked per clip, concat demuxer for speed
+# Step 2c: Dispatch per beat
 # ---------------------------------------------------------------------------
 
-def _concat_clips(comp_clips, beats_timed):
+def _prepare_beat_clip(beat: dict, image_path: "str | None",
+                       beat_duration: float, beat_idx: int) -> str:
+    os.makedirs(COMP_DIR, exist_ok=True)
+    out = os.path.join(COMP_DIR, "beat_%03d.mp4" % beat_idx)
+    if os.path.exists(out) and os.path.getsize(out) > 1000:
+        return out  # resume-safe
+
+    dur  = max(beat_duration, 0.5)
+    role = beat.get("section_role", "")
+
+    try:
+        if beat.get("beat_type") == "text_card":
+            card_text = beat.get("card_text", "")
+            png = _render_text_card_png(card_text, beat_idx)
+            _encode_illustration_clip(png, dur, beat_idx, role, out)
+        else:
+            # illustration
+            if image_path and os.path.exists(image_path):
+                _encode_illustration_clip(image_path, dur, beat_idx, role, out)
+            else:
+                logger.warning("Beat %d: no image path — cream fallback", beat_idx)
+                _make_cream_clip(dur, out)
+    except Exception as e:
+        logger.error("Beat %d failed: %s — cream fallback", beat_idx, e)
+        if os.path.exists(out):
+            os.remove(out)
+        _make_cream_clip(dur, out)
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Step 3: Concatenate beat clips
+# ---------------------------------------------------------------------------
+
+def _concat_clips(comp_clips):
     out       = os.path.join(COMP_DIR, "concat.mp4")
     list_path = os.path.join(COMP_DIR, "concat.txt")
 
@@ -367,112 +366,53 @@ def _concat_clips(comp_clips, beats_timed):
 
 
 # ---------------------------------------------------------------------------
-# Steps 4, 5, 7: Build FFmpeg text-overlay filter chains
+# Steps 4 & 5: Build FFmpeg text-overlay filter chains
 # ---------------------------------------------------------------------------
 
-def _build_card_vf(beats_timed, script, font, tempo):
-    """Section transition cards + keep-line proof card + watermark."""
-    filters    = []
-    cards_shown = set()
-    card_bg    = "0x%02x%02x%02x" % tuple(config.CARD_BG_COLOR)
-    ts         = 1.0 / tempo  # scale original timestamps into sped-up timeline
-
-    for beat in beats_timed:
-        t0   = beat["start"] * ts
-        role = beat["section_role"]
-        is_card_beat = (role in config.CARD_TRIGGER_ROLES and role not in cards_shown)
-
-        if is_card_beat:
-            cards_shown.add(role)
-            tc0   = t0
-            tc1   = tc0 + 2.5 * ts
-            label = _CARD_LABELS.get(role, role.replace("_", " ").upper())
-            filters.append(
-                "drawbox=x=0:y=0:w=iw:h=ih"
-                ":color=%s@%.2f:t=fill"
-                ":enable='between(t,%.3f,%.3f)'"
-                % (card_bg, config.CARD_BG_OPACITY, tc0, tc1)
-            )
-            filters.append(_dt(
-                font, config.CARD_FONT_SIZE, "white", label,
-                "(w-tw)/2", "(h-th)/2",
-                enable="%.3f,%.3f" % (tc0, tc1),
-                border=4,
-            ))
-
-    # Keep-line card: proof sentence in the turn section
-    if config.CARD_KEEP_LINE:
-        keep = script.get("keep_line", "").strip()
-        if keep:
-            for beat in beats_timed:
-                if beat["section_role"] == "turn":
-                    tk0   = (beat["start"] + 2.6) * ts
-                    tk1   = tk0 + 4.0 * ts
-                    short = re.sub(r"[''‚‛']", "", keep[:60])
-                    if len(keep) > 60:
-                        short += "..."
-                    filters.append(
-                        "drawbox=x=0:y=ih/3:w=iw:h=ih/3"
-                        ":color=%s@%.2f:t=fill"
-                        ":enable='between(t,%.3f,%.3f)'"
-                        % (card_bg, config.CARD_BG_OPACITY, tk0, tk1)
-                    )
-                    filters.append(_dt(
-                        font, 38, "white", short,
-                        "(w-tw)/2", "(h-th)/2",
-                        enable="%.3f,%.3f" % (tk0, tk1),
-                        border=2,
-                    ))
-                    break
-
-    # Watermark always visible
-    filters.append(_dt(
-        font, config.WATERMARK_FONT_SIZE,
-        "white@%.2f" % config.WATERMARK_OPACITY,
-        config.BRAND_NAME,
-        "w-tw-20", "h-th-20",
-    ))
-
-    return filters
+def _build_watermark(font):
+    """Brand watermark — dark text, low opacity, bottom corner."""
+    tr, tg, tb = config.TEXT_COLOR_DARK
+    color = "0x%02x%02x%02x@%.2f" % (tr, tg, tb, config.WATERMARK_OPACITY)
+    return _dt(
+        font, config.WATERMARK_FONT_SIZE, color,
+        config.BRAND_NAME, "w-tw-20", "h-th-20",
+    )
 
 
 def _build_beat_captions(beats_timed, font, tempo):
-    """Full beat-line captions — text changes exactly when the video cuts."""
-    filters    = []
-    cap_size   = 48
-    line_h     = cap_size + 12
-    ts         = 1.0 / tempo
-    cards_seen = set()
+    """Captions for illustration beats only — dark text at bottom."""
+    filters  = []
+    cap_size = 48
+    line_h   = cap_size + 12
+    ts       = 1.0 / tempo
+    tr, tg, tb = config.TEXT_COLOR_DARK
+    text_color = "0x%02x%02x%02x" % (tr, tg, tb)
 
     for beat in beats_timed:
-        t0   = beat["start"] * ts
-        t1   = beat["end"]   * ts
-        role = beat["section_role"]
-
-        is_card_beat = (role in config.CARD_TRIGGER_ROLES and role not in cards_seen)
-        if is_card_beat:
-            cards_seen.add(role)
-
-        # Delay caption start until the card overlay clears
-        caption_t0 = (beat["start"] + 2.6) * ts if is_card_beat else t0
-        caption_t1 = t1 - 0.08 * ts  # tiny gap before next cut
-
-        if caption_t1 - caption_t0 < 0.15:
+        # text_card beats are full-screen text — no caption overlay needed
+        if beat.get("beat_type") == "text_card":
             continue
 
-        lines    = _wrap_lines(beat["line"], max_chars=44)
-        total_h  = len(lines) * line_h
+        t0 = beat["start"] * ts
+        t1 = beat["end"]   * ts
+        caption_t1 = t1 - 0.08 * ts
+
+        if caption_t1 - t0 < 0.15:
+            continue
+
+        lines   = _wrap_lines(beat["line"], max_chars=44)
+        total_h = len(lines) * line_h
         y_anchor = "h*0.82-%d" % (total_h // 2)
 
         for li, line_text in enumerate(lines):
             y = "%s+%d" % (y_anchor, li * line_h)
             filters.append(_dt(
-                font, cap_size, "white", line_text,
+                font, cap_size, text_color, line_text,
                 "(w-tw)/2", y,
-                enable="%.3f,%.3f" % (caption_t0, caption_t1),
-                border=2,
+                enable="%.3f,%.3f" % (t0, caption_t1),
+                border=0,
                 box=True,
-                boxcolor="0x080a0e@0.85",
+                boxcolor="0xfaf6ef@0.80",
                 boxborderw=14,
             ))
 
@@ -480,16 +420,16 @@ def _build_beat_captions(beats_timed, font, tempo):
 
 
 # ---------------------------------------------------------------------------
-# Steps 6 & 8: Mix audio and write final MP4
+# Steps 6 & 7: Mix audio and write final MP4
 # ---------------------------------------------------------------------------
 
-def _add_text_and_audio(concat_path, tts_result, script, beats_timed, out_path):
+def _add_text_and_audio(concat_path, tts_result, beats_timed, out_path):
     font  = _find_font(config.PUNCH_FONT_FAMILY)
     tempo = getattr(config, "AUDIO_TEMPO", 1.0)
 
-    card_filters    = _build_card_vf(beats_timed, script, font, tempo)
     caption_filters = _build_beat_captions(beats_timed, font, tempo)
-    vf = ",".join(["setpts=PTS/%.4f" % tempo] + card_filters + caption_filters)
+    watermark       = _build_watermark(font)
+    vf = ",".join(["setpts=PTS/%.4f" % tempo] + caption_filters + [watermark])
 
     audio_path = tts_result["audio_path"]
     music_path = config.MUSIC_PATH
@@ -549,11 +489,12 @@ def compose_video(
     with open(tts_path,      encoding="utf-8") as f: tts      = json.load(f)
     with open(manifest_path, encoding="utf-8") as f: manifest = json.load(f)
 
-    beat_clips = manifest["beat_clips"]
+    beat_images = manifest["beat_images"]  # list of path | null, one per beat
 
-    if len(beat_clips) != len(beats):
+    if len(beat_images) != len(beats):
         raise ValueError(
-            "Clip/beat count mismatch: %d clips vs %d beats" % (len(beat_clips), len(beats))
+            "Image/beat count mismatch: %d images vs %d beats"
+            % (len(beat_images), len(beats))
         )
 
     logger.info("Compositor start | beats=%d", len(beats))
@@ -564,17 +505,16 @@ def compose_video(
 
     os.makedirs(COMP_DIR, exist_ok=True)
     comp_clips = []
-    for i, (beat, clip_path) in enumerate(zip(beats_timed, beat_clips)):
-        dur  = max(beat["end"] - beat["start"], 0.5)
-        role = beat["section_role"]
-        comp_clips.append(_prepare_beat_clip(clip_path, dur, i, role))
+    for i, (beat, image_path) in enumerate(zip(beats_timed, beat_images)):
+        dur = max(beat["end"] - beat["start"], 0.5)
+        comp_clips.append(_prepare_beat_clip(beat, image_path, dur, i))
         if (i + 1) % 10 == 0 or i + 1 == len(beats):
             logger.info("Clips prepared: %d/%d", i + 1, len(beats))
 
-    concat_path = _concat_clips(comp_clips, beats_timed)
+    concat_path = _concat_clips(comp_clips)
     logger.info("Concat -> %s", concat_path)
 
-    _add_text_and_audio(concat_path, tts, script, beats_timed, out_path)
+    _add_text_and_audio(concat_path, tts, beats_timed, out_path)
 
     size_mb = os.path.getsize(out_path) / 1_048_576
     logger.info("Done -> %s (%.1f MB)", out_path, size_mb)

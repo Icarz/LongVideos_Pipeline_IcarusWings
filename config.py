@@ -2,6 +2,8 @@
 
 Every module imports tuning constants from here rather than hardcoding. Change
 behavior here, not in module bodies. Windows-first, Python 3.12.
+
+Style: Hugh Knows — minimalist stick-figure educational tips format.
 """
 
 import os
@@ -18,132 +20,113 @@ LOG_FILE = os.path.join(LOGS_DIR, "pipeline.log")
 for _d in (TMP_DIR, LOGS_DIR, OUTPUT_DIR):
     os.makedirs(_d, exist_ok=True)
 
-# The hand-authored gold-standard exemplar that script_gen must match in shape,
-# discipline, and tone. Embedded as a few-shot example in the script prompt.
+# Hand-authored gold-standard exemplar — update when style changes.
 EXEMPLAR_SCRIPT_PATH = os.path.join(SCRIPTS_DIR, "script-01-2pm-focus.txt")
 
 # --- Video frame -----------------------------------------------------------
-VIDEO_WIDTH = 1920
+VIDEO_WIDTH  = 1920
 VIDEO_HEIGHT = 1080
-VIDEO_FPS = 30
-VIDEO_CODEC = "libx264"
-AUDIO_CODEC = "aac"
-VIDEO_BG_COLOR = (8, 10, 14)  # near-black, cool — matches the moody palette
+VIDEO_FPS    = 30
+VIDEO_CODEC  = "libx264"
+AUDIO_CODEC  = "aac"
+VIDEO_BG_COLOR = (250, 246, 239)   # warm cream #FAF6EF
+
+# --- Color theme -----------------------------------------------------------
+TEXT_COLOR_DARK  = (26, 26, 26)      # near-black — all primary text
+TEXT_COLOR_LIGHT = (240, 242, 245)   # near-white — watermark only
 
 # --- Script (stage 1) ------------------------------------------------------
-SCRIPT_MODEL = "claude-opus-4-8"
-SCRIPT_MAX_TOKENS = 8000
-SCRIPT_RETRY_ATTEMPTS = 3
-TARGET_WORDS_MIN = 700
-TARGET_WORDS_MAX = 900
-NARRATION_WPM = 150  # words/min; word-count -> runtime estimate. VALIDATE on first real TTS.
-# Canonical section roles, in the order the spec mandates. Each payoff opens the
-# next loop; no clean exits mid-script.
+SCRIPT_MODEL           = "claude-opus-4-8"
+SCRIPT_MAX_TOKENS      = 8000
+SCRIPT_RETRY_ATTEMPTS  = 3
+TARGET_WORDS_MIN       = 400
+TARGET_WORDS_MAX       = 550
+NARRATION_WPM          = 140   # punchy tips delivery; validate on first TTS run
+
 SCRIPT_SECTION_ROLES = [
-    "false_cause",
-    "turn",
-    "true_cause",
-    "re_hook",
-    "lever",
-    "close",
+    "intro",
+    "tip_1", "tip_2", "tip_3",
+    "tip_4", "tip_5", "tip_6",
+    "outro",
 ]
-MECHANISM_CONFIDENCE_VALUES = ["solid", "partial", "check"]
 
 # --- Beats (stage 2) -------------------------------------------------------
-BEAT_MODEL = "claude-opus-4-8"
-BEAT_MAX_TOKENS = 12000
-BEAT_RETRY_ATTEMPTS = 3
-BEAT_MIN_SECONDS = 2
-BEAT_MAX_SECONDS = 4
-TARGET_BEATS_MIN = 40
-TARGET_BEATS_MAX = 65
+BEAT_MODEL           = "claude-opus-4-8"
+BEAT_MAX_TOKENS      = 12000
+BEAT_RETRY_ATTEMPTS  = 3
+BEAT_MIN_SECONDS     = 2
+BEAT_MAX_SECONDS     = 4
+TARGET_BEATS_MIN     = 40
+TARGET_BEATS_MAX     = 65
 
-# --- TTS (stage 3) --------------------------------------------------------
-TTS_ENGINE = "edge-tts"
-TTS_VOICE = "en-US-AndrewMultilingualNeural"
-TTS_RATE = "-10%"
-TTS_PITCH = "-5Hz"
-ALIGN_MODEL = "whisper-large-v3"  # Groq Whisper fallback if edge-tts timings are too coarse
+BEAT_TYPES = ["illustration", "text_card"]
 
-# --- Visual direction is handled inside beat_plan (semantic framework) ----
-# No separate stage. Situation/mood/query discipline lives in beat_plan.py.
+# --- TTS (stage 3) ---------------------------------------------------------
+TTS_ENGINE   = "edge-tts"
+TTS_VOICE    = "en-US-AndrewMultilingualNeural"
+TTS_RATE     = "-10%"
+TTS_PITCH    = "-5Hz"
+ALIGN_MODEL  = "whisper-large-v3"
 
-# --- Background fetch (stage 4) -------------------------------------------
-# Degrade-never chain order; CC0 / no-attribution sources only.
-BACKGROUND_CHAIN = ["pexels", "pixabay", "coverr", "gradient"]
-PEXELS_ENABLED = True
-PIXABAY_ENABLED = True
-COVERR_ENABLED = True
-PEXELS_SEARCH_URL = "https://api.pexels.com/videos/search"
-PEXELS_ORIENTATION = "landscape"  # 16:9 (long-form), not portrait
-PEXELS_VIDEO_PER_PAGE = 15  # pull several candidates so the mood filter can choose
-PEXELS_SIZE = "medium"
-PEXELS_TIMEOUT = 60
-PEXELS_BACKOFFS = [2, 4, 8, 16]  # exponential backoff on 429 (free tier: 200 req/hr)
-PIXABAY_SEARCH_URL = "https://pixabay.com/api/videos/"
-COVERR_SEARCH_URL = "https://api.coverr.co/videos"
-FOOTAGE_HISTORY_PATH = os.path.join(TMP_DIR, "footage_history.json")
-FOOTAGE_HISTORY_MAX = 600  # 40-70 beats/video -> larger ledger than Shorts
-
-# --- Mood footage filter (stage 3) ----------------------------------------
-# Prefer darker, cooler clips; reject generic-bright stock. Scored on poster frames.
-MOOD_LUMA_TARGET = 70        # ideal median luma (0-255): dim but not crushed
-MOOD_LUMA_LEGIBILITY_FLOOR = 18  # reject below this — too dark to read footage at all
-MOOD_COOL_BIAS_WEIGHT = 1.0  # weight on (blue - red) channel mean in the score
-MOOD_DARK_WEIGHT = 1.0       # weight on darkness preference in the score
+# --- Image generation (stage 4) --------------------------------------------
+IMAGE_GEN_MODEL     = "gpt-image-1"
+IMAGE_GEN_SIZE      = "1536x1024"   # landscape — valid gpt-image-1 size
+IMAGE_GEN_QUALITY   = "standard"
+IMAGE_GEN_STYLE     = (
+    "minimalist black line-art stick figure illustration, "
+    "warm cream background, simple educational explainer style, "
+    "no color, no shading, clean and flat, single centered scene"
+)
+IMAGE_GEN_CACHE_DIR = os.path.join(TMP_DIR, "image_cache")
 
 # --- Playback tempo (stage 5) ---------------------------------------------
-AUDIO_TEMPO = 1.20          # speed up both video and audio by 20%; video is shorter
+AUDIO_TEMPO = 1.20   # speed up video + audio by 20%
 
 # --- Music & motion (stage 5) ---------------------------------------------
-MUSIC_PATH = os.path.join(ASSETS_DIR, "music", "ambient_bed.mp3")
-MUSIC_GAIN_DB = -18          # under the full-volume VO
-MUSIC_SWELL_GAIN_DB = -14    # slightly louder at the turn and the close
-MUSIC_FADE_IN = 1.5
-MUSIC_FADE_OUT = 2.0
-BG_CROSSFADE = 0.8           # gentle crossfade between beats (default)
-BG_HARD_CUT_ROLE = "turn"    # this section's first beat is a hard cut (the reveal), no crossfade
-BG_KENBURNS_ZOOM = 1.10      # constant over-scale base (bar-proof: single resize)
-BG_KENBURNS_PAN = 40         # max pan drift in px per axis
-BG_OVERLAY_OPACITY = 0.60    # darken footage for on-screen-text legibility
+MUSIC_PATH          = os.path.join(ASSETS_DIR, "music", "ambient_bed.mp3")
+MUSIC_GAIN_DB       = -18
+MUSIC_SWELL_GAIN_DB = -14
+MUSIC_FADE_IN       = 1.5
+MUSIC_FADE_OUT      = 2.0
+BG_CROSSFADE        = 0.8
+BG_HARD_CUT_ROLE    = "tip_1"   # first tip opens with a hard cut
 
 # --- Kinetic text: keyword punches (stage 5) ------------------------------
-PUNCH_FONT_SIZE = 64
-PUNCH_FONT_FAMILY = "Arial Bold"  # bold sans-serif; override with .ttf path
-PUNCH_COLOR = (240, 242, 245)     # near-white
-PUNCH_FADE_IN = 0.0               # sharp cut-in (appears like a cut, not a flourish)
-PUNCH_FADE_OUT = 0.35             # quick fade-out
-PUNCH_HOLD_MIN = 1.5              # seconds
-PUNCH_HOLD_MAX = 2.0              # seconds
-PUNCH_POSITION = "lower_third"    # "center" or "lower_third"; per-beat override allowed
+PUNCH_FONT_SIZE   = 64
+PUNCH_FONT_FAMILY = "Arial Bold"
+PUNCH_COLOR       = TEXT_COLOR_DARK
+PUNCH_FADE_IN     = 0.0
+PUNCH_FADE_OUT    = 0.35
+PUNCH_HOLD_MIN    = 1.5
+PUNCH_HOLD_MAX    = 2.0
+PUNCH_POSITION    = "lower_third"
 
 # --- Kinetic text: section cards (stage 5) --------------------------------
-CARD_FONT_SIZE = 88
-CARD_FONT_FAMILY = "Arial Bold"   # bold sans-serif; override with .ttf path
-CARD_COLOR = (240, 242, 245)      # near-white
-CARD_FADE_IN = 0.8                # seconds
-CARD_FADE_OUT = 0.8               # seconds
-CARD_BG_OPACITY = 0.85            # dark overlay — footage bleeds through at ~15%
-CARD_BG_COLOR = (8, 10, 14)       # matches VIDEO_BG_COLOR
-CARD_MAX_PER_VIDEO = 4            # hard cap: turn, re_hook, lever, close (+ keep_line)
-CARD_TRIGGER_ROLES = ["turn", "re_hook", "lever", "close"]
-CARD_KEEP_LINE = True             # the keep_line (proof sentence) always gets a card
+CARD_FONT_SIZE     = 88
+CARD_FONT_FAMILY   = "Georgia"        # serif — matches tip title style
+CARD_COLOR         = TEXT_COLOR_DARK  # dark text on light background
+CARD_FADE_IN       = 0.8
+CARD_FADE_OUT      = 0.8
+CARD_BG_COLOR      = VIDEO_BG_COLOR   # card bg matches overall bg (cream)
+CARD_BG_OPACITY    = 0.95
+CARD_MAX_PER_VIDEO = 8
+CARD_TRIGGER_ROLES = [
+    "tip_1", "tip_2", "tip_3",
+    "tip_4", "tip_5", "tip_6",
+]
+CARD_KEEP_LINE = False   # no proof-sentence card in tips format
 
 # --- Brand watermark -------------------------------------------------------
-BRAND_NAME = "Icarus Wings"
+BRAND_NAME          = "Icarus Wings"
 WATERMARK_FONT_SIZE = 28
-WATERMARK_OPACITY = 0.35     # low-opacity wordmark, bottom corner
-
-# --- Color grade (stage 5) ------------------------------------------------
-GRADE_SATURATION = 0.78      # desaturate to 78% — cool, less vibrant stock feel
-GRADE_GRAIN_STRENGTH = 8     # film grain noise strength (0 = off)
+WATERMARK_OPACITY   = 0.25   # subtle on light background
 
 # --- Edge-brightness verification (stage 5) -------------------------------
-EDGE_SCAN_STRIP_PX = 15      # leftmost/rightmost strip width to sample
-EDGE_SCAN_INTERVAL_S = 2.0   # sample one frame every N seconds across the whole video
-EDGE_DARK_THRESHOLD = 8      # one edge below this...
-EDGE_BRIGHT_THRESHOLD = 15   # ...while the opposite is above this => suspected bar
+EDGE_SCAN_STRIP_PX  = 15
+EDGE_SCAN_INTERVAL_S = 2.0
+EDGE_DARK_THRESHOLD  = 8
+EDGE_BRIGHT_THRESHOLD = 15
 
-# --- Publish (stage 6) -----------------------------------------------------
-YOUTUBE_CATEGORY_ID = "22"   # People & Blogs (long-form, NOT a Short)
+# --- Publish (stage 6) ----------------------------------------------------
+YOUTUBE_CATEGORY_ID     = "22"   # People & Blogs
 YOUTUBE_DEFAULT_PRIVACY = "private"
